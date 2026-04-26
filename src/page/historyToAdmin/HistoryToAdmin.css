@@ -1,0 +1,8 @@
+.table-horizontal-scroll {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+.table-horizontal-scroll .users-table {
+    min-width: 200px;
+}

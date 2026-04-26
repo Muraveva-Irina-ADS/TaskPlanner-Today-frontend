@@ -1,0 +1,215 @@
+.calendar-wrapper {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+.calendar-header {
+    background: white;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.calendar-title {
+    margin: 0;
+    font-size: 24px;
+    color: #2e7d32;
+    font-weight: 500;
+}
+.calendar-grid {
+    padding: 20px;
+}
+.calendar-day .calendar-days {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 0 10px;
+}
+.weekday {
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    padding: 10px;
+    background: #e8f5e9;
+    border-radius: 8px;
+}
+.calendar-week .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+.calendar-month .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+.calendar-day {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    height: auto;
+    min-height: 100px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.calendar-day.today {
+    background: #e8f5e9;
+    border: 2px solid #4CAF50;
+}
+
+.calendar-day.other-month {
+    opacity: 0.5;
+    background: #f5f5f5;
+}
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+.day-number {
+    font-size: 16px;
+    font-weight: 600;
+    color: #212529;
+}
+.tasks-count {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+.tasks-count.normal {
+    background: #4CAF50;
+    color: white;
+}
+.tasks-count.warning {
+    background: #FF9800;
+    color: white;
+}
+.tasks-count.danger {
+    background: #f44336;
+    color: white;
+}
+.tasks-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-right: 4px;
+}
+.tasks-list::-webkit-scrollbar {
+    width: 4px;
+}
+.tasks-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.tasks-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+.tasks-list::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+.task-group {
+    margin-bottom: 4px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+.task-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px;
+    background: #f1f3f5;
+    font-size: 10px;
+    font-weight: 600;
+    color: #495057;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+.task-group-name {
+    text-transform: uppercase;
+}
+.task-group-count {
+    background: #dee2e6;
+    padding: 2px 5px;
+    border-radius: 10px;
+    font-size: 9px;
+}
+.task-indicators {
+    display: flex;
+    gap: 3px;
+    margin-right: 5px;
+    flex-shrink: 0;
+}
+.task-matrix-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+.calendar-task {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    border-left: 5px solid;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-bottom: 2px;
+    box-sizing: border-box;
+    width: 300%
+}
+.calendar-task:hover {
+    transform: translateX(2px);
+    background: #e9ecef;
+}
+.task-project-tag {
+    font-size: 9px;
+    padding: 2px 4px;
+    background: white;
+    border-radius: 3px;
+    white-space: nowrap;
+    border: 1px solid currentColor;
+    flex-shrink: 0;
+    align-self: center;
+}
+.task-name-tag {
+    font-size: 12px;
+    padding: 2px;
+    background: white;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+
+@media (max-width: 768px) {
+    .calendar-week .calendar-days,
+    .calendar-month .calendar-days {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px;
+    }
+}

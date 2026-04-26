@@ -1,0 +1,269 @@
+.toggle-view-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50px;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s;
+    z-index: 100;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-weight: 500;
+}
+.toggle-view-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+.timer-control-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 80px;
+    flex: 1;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+.timer-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+.timer-circle-large {
+    width: 350px;
+    height: 350px;
+    filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3));
+}
+.timer-circle-bg {
+    stroke: rgba(255, 255, 255, 0.15);
+}
+.timer-circle-progress {
+    filter: drop-shadow(0 0 20px currentColor);
+    transition: stroke-dashoffset 0.5s linear;
+}
+.timer-text-large {
+    font-size: 58px;
+    font-weight: 800;
+    fill: white;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+.timer-mode-label {
+    font-size: 22px;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-weight: 500;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 25px;
+    border-radius: 40px;
+    backdrop-filter: blur(5px);
+}
+.timer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 250px;
+}
+.timer-action-btn {
+    width: 100%;
+    padding: 18px 35px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 60px;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+.timer-action-btn.btn-success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+.timer-action-btn.btn-success:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(76, 175, 80, 0.4);
+}
+.timer-action-btn.btn-warning {
+    background: linear-gradient(135deg, #FF9800, #f57c00);
+    color: white;
+}
+.timer-action-btn.btn-warning:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(255, 152, 0, 0.4);
+}
+.timer-action-btn.btn-danger {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+.timer-action-btn.btn-danger:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(244, 67, 54, 0.4);
+}
+.timer-fullscreen-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+.timer-only-task-name {
+    text-align: center;
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px 40px;
+    border-radius: 60px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+    letter-spacing: 1px;
+}
+.timer-fullscreen-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 50px;
+    font-size: 12vw;
+    line-height: 1;
+    color: white;
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.5), 0 0 60px rgba(76, 175, 80, 0.3);
+}
+.timer-digit-group {
+    display: flex;
+    gap: 5px;
+}
+.timer-digit {
+    display: inline-block;
+    min-width: 0.8em;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0 5px;
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    animation: digitPulse 2s infinite;
+    transition: all 0.3s ease;
+    will-change: transform;
+}
+.timer-colon {
+    font-size: 12vw;
+    margin: 0 5px;
+    animation: colonPulse 2s infinite;
+    opacity: 0.9;
+}
+.timer-fullscreen-controls {
+    display: flex;
+    gap: 20px;
+    margin-top: 30px;
+}
+.timer-fullscreen-btn {
+    padding: 15px 40px;
+    font-size: 20px;
+    font-weight: 600;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    min-width: 160px;
+}
+.timer-fullscreen-btn.start {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+.timer-fullscreen-btn.pause {
+    background: linear-gradient(135deg, #FF9800, #f57c00);
+}
+.timer-fullscreen-btn.stop {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+.timer-fullscreen-btn.resume {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+}
+.timer-fullscreen-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+.timer-only .back-button-container,
+.timer-only .section-select {
+    display: none;
+}
+.current-task-display {
+    text-align: center;
+    margin: 20px auto;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 60px;
+    max-width: 600px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.current-task-title {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+.current-task-name {
+    font-size: 28px;
+    font-weight: 700;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    word-break: break-word;
+}
+
+
+
+
+@media (max-width: 768px) {
+    .section-select {
+        width: 95%;
+        margin: 10px auto;
+        padding: 12px;
+    }
+    .display-tasks {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+    .timer-control-panel {
+        display: flex;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px;
+        width: 100%;
+    }
+    .timer-actions {
+        display: flex;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px;
+        width: 100%;
+        margin-top: 10px;
+    }
+    .timer-actions button,
+    .timer-action-btn {
+        width: 80%;
+        max-width: 200px;
+        margin: 4px auto;
+    }
+    .timer-fullscreen-controls {
+        display: flex;
+        flex-direction: column !important;
+        gap: 10px;
+        width: 100%;
+        align-items: center;
+    }
+}
