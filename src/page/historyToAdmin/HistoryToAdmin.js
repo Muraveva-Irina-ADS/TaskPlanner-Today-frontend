@@ -274,6 +274,23 @@ const AppHistoryToAdmin = () => {
         keys.push('was_interrupted');
         return keys;
     };
+    const getFormattedValue = (value, key, type) => {
+        if (type === 'pomodoro') {
+            if (key === 'pomodoro_date' && value) 
+                return new Date(value).toLocaleDateString('ru-RU');
+            if (key.includes('_time') && value) 
+                return new Date(value).toLocaleString('ru-RU', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                }).replace(',', '');
+            if (key === 'was_interrupted') 
+                return value ? 'Да' : 'Нет';
+        }
+        
+        if (key === 'execution_date' && value) 
+            return new Date(value).toLocaleDateString('ru-RU');
+        
+        return value || '-';
+    };
     const handleUploading = async() => {
         try {
         let data;
@@ -309,188 +326,103 @@ const AppHistoryToAdmin = () => {
             setError(message);
         }
     }
+    const renderTable = (title, data, getHeadersFunc, getKeysFunc, formatType) => {
+        return (
+            <>
+                <h2 className="h1-prof">Таблица содержит {data.length} строк</h2>
+                <h2 className="h1-prof">Пример данных таблицы {title}</h2>
+                <div className="table-horizontal-scroll">
+                    <Table striped bordered hover responsive className="users-table">
+                        <thead>
+                            <tr>
+                                {getHeadersFunc().map((header, index) => (
+                                    <th key={index}>{header}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.slice(0, 5).map((element) => (
+                                <tr key={element.id} className="user-main-row">
+                                    {getKeysFunc().map((key, colIndex) => (
+                                        <td key={colIndex}>
+                                            {getFormattedValue(element[key], key, formatType)}
+                                         </td>
+                                    ))}
+                                 </tr>
+                            ))}
+                            {data.length === 0 && (
+                                <tr>
+                                    <td colSpan={getHeadersFunc().length} className="text-center">
+                                        Нет данных для отображения
+                                     </td>
+                                 </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </div>
+            </>
+        );
+    };
     return (
         <div className="project-wrapper">
             <NavBar />
             <div className="project-layout">
-            <Navigate/>
-            <div className="projectHistory-content">
-            <div className="back-button-container">
-                <button onClick={() => navigate(-1)} className="back-button">
-                <img src={backIcon} className="back-icon"/>Назад</button>
-            </div>
-            {field === 'warning_dates_tasks' && (<ModalStr show={showModal} onHide={closeModal} modalType={''} title={'Предупреждение'}
-                        formData={{}} onChange={''} onSave={handleUploading} error={error} isNew={true}
-                        fields={[field]} users={modalData}/>)}
-            {field === 'warning_pomodoro' && (<ModalStr show={showModal} onHide={closeModal} modalType={''} title={'Предупреждение'}
-                        formData={{}} onChange={''} onSave={handleUploadingPomodoro} error={error} isNew={true}
-                        fields={[field]} users={modalData}/>)}                       
-            <div className="profile-header">
-                <h1 className="h1-prof">Выгрузка данных в исторические таблицы</h1>
-            </div>
-            {error && <div className="error-message">{error}</div>}
-            <div className="section-select">
-            <h2 className="h1-prof">Таблицы сроков выполнения задач и этапов</h2>
-                <div className="display-tasks">
-                <h2 className="h1-prof">До какого числа выгружать включительно:</h2>
-                <div className="calendar-date-picker">
-                    <InputGroup style={{ width: '250px' }}>
-                        <Form.Control
-                            type="date"
-                            value={dateInput}
-                            onChange={handleDateInputChange}
-                        />
-                    </InputGroup>
-                </div>
-                <div className="text-end mb-3">
-                        <Button variant="primary" style={{height: '60px'}} onClick={() => uploadingDataDatesTasks()}>Выгрузить данные таблиц Сроков задач и Сроков этапов</Button>
-                </div>
-            </div>
-            <h2 className="h1-prof">Последний раз данные выгружались за {last_export_date_dates_tasks}</h2>
-            <h2 className="h1-prof">Таблица содержит {datesTasks.length} строк</h2>
-            
-            <h2 className="h1-prof">Пример данных таблицы Сроков задач</h2>
-            <div className="table-horizontal-scroll">
-            <Table striped bordered hover responsive className="users-table">
-            <thead>
-                <tr>
-                    {getColumnHeaders('Задача').map((header, index) => (
-                        <th key={index}>{header}</th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {datesTasks.slice(0, 5).map((element) => {
-                    return (
-                        <React.Fragment key={element.id}>
-                            <tr className="user-main-row">
-                                {getColumnKeys('Задача').map((key, colIndex) => {
-                                    let value = element[key];
-                                    if ((key === 'execution_date') && value) {
-                                        value = new Date(value).toLocaleDateString('ru-RU');
-                                    }
-                                    return <td key={colIndex} className="user-data-cell">{value || '-'}</td>;
-                                })}
-                            </tr>
-                        </React.Fragment>
-                    );
-                })}
-                {datesTasks.length === 0 && (
-                    <tr>
-                        <td colSpan={getColumnHeaders('Задача').length + 1} className="text-center">
-                            Нет данных для отображения
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </Table>
-        </div>
+                <Navigate/>
+                <div className="projectHistory-content">
+                    <div className="back-button-container">
+                        <button onClick={() => navigate(-1)} className="back-button">
+                        <img src={backIcon} className="back-icon"/>Назад</button>
+                    </div>
+                    {field === 'warning_dates_tasks' && (<ModalStr show={showModal} onHide={closeModal} modalType={''} title={'Предупреждение'}
+                                formData={{}} onChange={''} onSave={handleUploading} error={error} isNew={true}
+                                fields={[field]} users={modalData}/>)}
+                    {field === 'warning_pomodoro' && (<ModalStr show={showModal} onHide={closeModal} modalType={''} title={'Предупреждение'}
+                                formData={{}} onChange={''} onSave={handleUploadingPomodoro} error={error} isNew={true}
+                                fields={[field]} users={modalData}/>)}                       
+                    <div className="profile-header">
+                        <h1 className="h1-prof">Выгрузка данных в исторические таблицы</h1>
+                    </div>
 
-        <h2 className="h1-prof">Таблица содержит {datesStages.length} строк</h2>
-        <h2 className="h1-prof">Пример данных таблицы Сроков этапов</h2>
-            <div className="table-horizontal-scroll">
-            <Table striped bordered hover responsive className="users-table">
-            <thead>
-                <tr>
-                    {getColumnHeaders('Этап').map((header, index) => (
-                        <th key={index}>{header}</th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {datesStages.slice(0, 5).map((element) => {
-                    return (
-                        <React.Fragment key={element.id}>
-                            <tr className="user-main-row">
-                                {getColumnKeys('Этап').map((key, colIndex) => {
-                                    let value = element[key];
-                                    if ((key === 'execution_date') && value) {
-                                        value = new Date(value).toLocaleDateString('ru-RU');
-                                    }
-                                    return <td key={colIndex} className="user-data-cell">{value || '-'}</td>;
-                                })}
-                            </tr>
-                        </React.Fragment>
-                    );
-                })}
-                {datesStages.length === 0 && (
-                    <tr>
-                        <td colSpan={getColumnHeaders('Этап').length + 1} className="text-center">
-                            Нет данных для отображения
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </Table>
-        </div>
-        </div>
+                    {error && <div className="error-message">{error}</div>}
 
-        {error && <div className="error-message">{error}</div>}
-        <div className="section-select">
-            <h2 className="h1-prof">Таблица Pomodoro и даты их создания</h2>
-                <div className="display-tasks">
-                <h2 className="h1-prof">До какого числа выгружать включительно:</h2>
-                <div className="calendar-date-picker">
-                    <InputGroup style={{ width: '250px' }}>
-                        <Form.Control
-                            type="date"
-                            value={dateInputPomodoro}
-                            onChange={handleDateInputPomodoroChange}
-                        />
-                    </InputGroup>
-                </div>
-                <div className="text-end mb-3">
-                        <Button variant="primary" style={{height: '60px'}} onClick={() => uploadingDataPomodoro()}>Выгрузить данные таблицы Pomodoro</Button>
+                    <div className="section-select">
+                        <h2 className="h1-prof">Таблицы сроков выполнения задач и этапов</h2>
+                        <div className="display-tasks">
+                            <h2 className="h1-prof">До какого числа выгружать включительно:</h2>
+                            <div className="calendar-date-picker">
+                                <InputGroup style={{ width: '250px' }}>
+                                    <Form.Control type="date" value={dateInput} onChange={handleDateInputChange}/>
+                                </InputGroup>
+                            </div>
+                            <div className="text-end mb-3">
+                                <Button variant="primary" style={{height: '60px'}} onClick={() => uploadingDataDatesTasks()}>Выгрузить данные таблиц Сроков задач и Сроков этапов</Button>
+                            </div>
+                        </div>
+                        <h2 className="h1-prof">Последний раз данные выгружались за {last_export_date_dates_tasks}</h2>
+                        {renderTable('Сроков задач', datesTasks, () => getColumnHeaders('Задача'), () => getColumnKeys('Задача'), 'dates_tasks')}
+                        {renderTable('Сроков этапов', datesStages, () => getColumnHeaders('Этап'), () => getColumnKeys('Этап'), 'dates_stages')}
+                    </div>
+
+                    {error && <div className="error-message">{error}</div>}
+
+                    <div className="section-select">
+                        <h2 className="h1-prof">Таблица Pomodoro и даты их создания</h2>
+                        <div className="display-tasks">
+                            <h2 className="h1-prof">До какого числа выгружать включительно:</h2>
+                            <div className="calendar-date-picker">
+                                <InputGroup style={{ width: '250px' }}>
+                                    <Form.Control type="date" value={dateInputPomodoro} onChange={handleDateInputPomodoroChange}/>
+                                </InputGroup>
+                            </div>
+                            <div className="text-end mb-3">
+                                    <Button variant="primary" style={{height: '60px'}} onClick={() => uploadingDataPomodoro()}>Выгрузить данные таблицы Pomodoro</Button>
+                            </div>
+                        </div>
+                        <h2 className="h1-prof">Последний раз данные выгружались за {last_export_date_pomodoro}</h2>
+                        {renderTable('Pomodoro', pomodoro, () => getColumnHeadersPomodoro(), () => getColumnKeysPomodoro(), 'pomodoro')}
+                    </div>
                 </div>
             </div>
-            <h2 className="h1-prof">Последний раз данные выгружались за {last_export_date_pomodoro}</h2>
-            <h2 className="h1-prof">Таблица содержит {pomodoro.length} строк</h2>
-            
-            <h2 className="h1-prof">Пример данных таблицы</h2>
-            <div className="table-horizontal-scroll">
-            <Table striped bordered hover responsive className="users-table">
-            <thead>
-                <tr>
-                    {getColumnHeadersPomodoro().map((header, index) => (
-                        <th key={index}>{header}</th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody>
-                {pomodoro.slice(0, 5).map((element) => {
-                    return (
-                        <React.Fragment key={element.id}>
-                            <tr className="user-main-row">
-                                {getColumnKeysPomodoro().map((key, colIndex) => {
-                                    let value = element[key];
-                                    if ((key === 'pomodoro_date') && value) {
-                                        value = new Date(value).toLocaleDateString('ru-RU');
-                                    }
-                                    if (key === 'was_interrupted') {
-                                        if (value === true)
-                                            value = 'Да'
-                                        else
-                                            value = 'Нет'
-                                    }
-                                    return <td key={colIndex} className="user-data-cell">{value || '-'}</td>;
-                                })}
-                            </tr>
-                        </React.Fragment>
-                    );
-                })}
-                {pomodoro.length === 0 && (
-                    <tr>
-                        <td colSpan={getColumnHeadersPomodoro().length + 1} className="text-center">
-                            Нет данных для отображения
-                        </td>
-                    </tr>
-                )}
-            </tbody>
-        </Table>
-        </div>
-        </div>
-        </div>
-        </div>
         </div>
     );
 };

@@ -15,7 +15,7 @@ import toast from 'react-hot-toast';
 
 const AppCalendar = observer(() => {
     const { user } = useContext(Context);
-    const location = useLocation(); // Для получения state при возврате
+    const location = useLocation();
     const navigate = useNavigate();
     const [view, setView] = useState('day');
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -33,7 +33,7 @@ const AppCalendar = observer(() => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(null);
 
-    // Восстанавливаем состояние при возврате
+    // Восстанавление состояний при возврате
     useEffect(() => {
         if (location.state?.returnDate) {
             setCurrentDate(new Date(location.state.returnDate));
@@ -44,7 +44,7 @@ const AppCalendar = observer(() => {
         }
     }, [location.state]);
 
-    // Обновляем поле ввода при изменении даты
+    // Обновление поля ввода при изменении даты
     useEffect(() => {
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
@@ -109,18 +109,18 @@ const AppCalendar = observer(() => {
     };
     const get_exportDateTasks = async () => {
         try {
-              let data;
-              data = await get_export_date_from_dates_tasks_history();
-              if (data && data[0].last_export_date) {
+            let data;
+            data = await get_export_date_from_dates_tasks_history();
+            if (data && data[0].last_export_date) {
                 const date = new Date(data[0].last_export_date);
                 const formattedDate = date.toLocaleDateString('en-CA');
                 setLastExportDate(formattedDate);
-                }
-                else {
-                    if (user.role === 'admin')
-                        setError('Данные в исторической таблице сроков задач не найдены');
-                    setLastExportDate('1970-01-01');
-                }
+            }
+            else {
+                if (user.role === 'admin')
+                    setError('Данные в исторической таблице сроков задач не найдены');
+                setLastExportDate('1970-01-01');
+            }
           } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
@@ -133,9 +133,8 @@ const AppCalendar = observer(() => {
         get_exportDateTasks();
         getYourSettings();
     }, []);
-    const handleDateInputChange = (e) => {
-        setDateInput(e.target.value);
-    };
+
+    const handleDateInputChange = (e) => {setDateInput(e.target.value);};
 
     const formatDateForComparison = (date) => {
         if (!date) return '';
@@ -392,14 +391,8 @@ const AppCalendar = observer(() => {
                 </div>
                 <div className="calendar-date-picker">
                     <InputGroup style={{ width: '250px' }}>
-                        <Form.Control
-                            type="date"
-                            value={dateInput}
-                            onChange={handleDateInputChange}
-                        />
-                        <Button variant="primary" onClick={goToDate}>
-                            Перейти
-                        </Button>
+                        <Form.Control type="date" value={dateInput} onChange={handleDateInputChange}/>
+                        <Button variant="primary" onClick={goToDate}>Перейти</Button>
                     </InputGroup>
                 </div>
                 {dates_stages_history.length > 0 && (

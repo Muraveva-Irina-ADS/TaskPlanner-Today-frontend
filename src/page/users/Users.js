@@ -11,6 +11,7 @@ import moment from 'moment';
 import { useNavigate } from "react-router-dom";
 import backIcon from '../../images/назад.png';
 import toast from 'react-hot-toast';
+import ModalStr from '../../components/ModalStructure';
 
 const AppUsers = observer(() => {
     const { user } = useContext(Context);
@@ -497,6 +498,14 @@ const AppUsers = observer(() => {
     return (
         <div className="app-profile-wrapper">
             <NavBar />
+            {modalType === 'user_modal' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={isNewUser ? 'Добавление нового пользователя' : 'Редактирование настроек пользователя'}
+                        formData={formData} onChange={handleChange} onSave={handleUser} error={error} isNew={isNewUser}
+                        fields={['first_name', 'last_name', 'email', 'curPassword', 'newPassword', 'role_name_users', 'phone_number', 'birthday', 'note_users', 
+                        'limit_tasks', 'pomodoro_duration', 'rest_duration', 'start_working_day', 'end_working_day', 'number_pomodoro_per_day',
+                        'matrix_put', 'status_put']} 
+                        extraData={{user: user, selectedUser: selectedUser, adminSettings: adminSettings,
+                        adminMatrix: adminMatrix, adminStatus: adminStatus}}/>)}
+            
             {modalType==='user_modal' ? (<> <Modal show={showModal} onHide={closeModal} modalType={modalType} centered>
                     <Modal.Header closeButton>
                         <Modal.Title className="h1-prof">{isNewUser ? 'Добавление нового пользователя' : 'Редактирование настроек пользователя'}</Modal.Title>
@@ -822,7 +831,6 @@ const AppUsers = observer(() => {
                         <Button variant="primary" onClick={handleUser}>{isNewUser ? 'Добавить' : 'Сохранить'}</Button>
                     </Modal.Footer>
                 </Modal> </> ) : <></>}
-
 
 
             <div className="back-button-container">

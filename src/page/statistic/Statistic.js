@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { observer } from "mobx-react-lite";
 import NavBar from "../../components/NavBar";
 import backIcon from '../../images/назад.png';

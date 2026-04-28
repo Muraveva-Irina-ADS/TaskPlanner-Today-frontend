@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Context } from '../../index';
 import { get_stages, get_tasks_name, pomodoro_post, get_profile_settings_email} from "../../api/commonApi";
 import NavBar from '../../components/NavBar';
@@ -232,8 +232,9 @@ const AppPomodoro = () => {
                         style={{backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover',
                         backgroundPosition: 'center', backgroundRepeat: 'no-repeat', height: timerState !== 'idle' ? '100vh' : 'auto'}}>
                     {error && <div className="error-message">{error}</div>}
-                    {isTimerOnly && (<><Button variant="success" onClick={toggleTimerOnly} className="timer-action-btn" 
-                        title="Показать панель управления">Показать панель</Button>
+                    {isTimerOnly && (<>
+                        <Button variant="success" onClick={toggleTimerOnly} className="timer-action-btn" 
+                            title="Показать панель управления">Показать панель</Button>
                         <div style={{ position: 'relative' }}>
                                 <HelpTip>
                                     Навигация и переход на другие страницы недоступны, когда запущен таймер<br/>

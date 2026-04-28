@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { deleteTask, get_tasks_with_user, get_users, task_post, get_profile_matrix_email, get_projects_with_user } from "../../api/commonApi";
+import { deleteTask, get_tasks_with_user, task_post, get_profile_matrix_email, get_projects_with_user } from "../../api/commonApi";
 import backIcon from '../../images/назад.png'; 
 import { observer } from "mobx-react-lite";
 import NavBar from "../../components/NavBar";
@@ -15,7 +15,6 @@ const AppAllTasks = observer(() => {
     const [matrix, setMatrix] = useState([]);
     const [projects, setProjects] = useState([]);    
     const [showModal, setShowModal] = useState(false);
-    const [isNewTask, setIsNewTask] = useState(false);
     const [formData, setFormData] = useState({});
     const [modalType, setModalType] = useState(null);
     const [error, setError] = useState('');
@@ -49,7 +48,7 @@ const AppAllTasks = observer(() => {
     const [filterField, setFilterField] = useState('email');
     const [filterValue, setFilterValue] = useState('');
     const [filteredTasks, setFilteredTasks] = useState([]);
-    const [users, setUsers] = useState([]);
+
     const getProjects = async () => {
         try {
             const projects = await get_projects_with_user();
@@ -63,72 +62,15 @@ const AppAllTasks = observer(() => {
     const getTasks = async () => {
         try {
             const tasksData = await get_tasks_with_user();
-            
-            // Группировка задач и этапов
             const groupedTasks = {};
-            
             tasksData.forEach(row => {
                 const taskId = row.id;
-                
-                if (!groupedTasks[taskId]) {
-                    // Создаем объект задачи без этапов
-                    groupedTasks[taskId] = {
-                        id: row.id,
-                        task_name: row.task_name,
-                        description: row.description,
-                        status_name: row.status_name,
-                        matrix_name: row.matrix_name,
-                        deadline: row.deadline,
-                        pomodoros_planned: row.pomodoros_planned,
-                        final_deadline: row.final_deadline,
-                        pomodoros_spent: row.pomodoros_spent,
-                        created_at: row.created_at,
-                        repeat_type_name: row.repeat_type_name,
-                        number_repeat: row.number_repeat,
-                        users_id: row.users_id,
-                        email: row.email,
-                        first_name: row.first_name,
-                        last_name: row.last_name,
-                        project_id: row.project_id,
-                        project_name: row.project_name,
-                        min_time_period_dates_tasks: row.min_time_period_dates_tasks,
-                        max_time_period_dates_tasks: row.max_time_period_dates_tasks,
-                        stages: []
-                    };
-                }
-                
-                // Если есть этап, добавляем его
-                if (row.stage_id) {
-                    groupedTasks[taskId].stages.push({
-                        id: row.stage_id,
-                        stage_name: row.stage_name,
-                        stage_description: row.stage_description,
-                        stage_deadline: row.stage_deadline,
-                        stage_pomodoros_planned: row.stage_pomodoros_planned,
-                        stage_final_deadline: row.stage_final_deadline,
-                        stage_pomodoros_spent: row.stage_pomodoros_spent,
-                        stage_created_at: row.stage_created_at,
-                        min_time_period_dates_stages: row.min_time_period_dates_stages,
-                        max_time_period_dates_stages: row.max_time_period_dates_stages
-                    });
-                }
+                if (!groupedTasks[taskId])
+                    groupedTasks[taskId] = { ...row, stages: [] };
+                if (row.stage_id)
+                    groupedTasks[taskId].stages.push({ ...row, id: row.stage_id });
             });
-            
-            // Преобразуем объект в массив
-            const tasksArray = Object.values(groupedTasks);
-            setTasks(tasksArray);
-            
-        } catch (e) {
-            console.error('Ошибка при взаимодействии с сервером:', e);
-            const message = e.response?.data?.error || 'Произошла ошибка';
-            setError(message);
-        }
-    };
-
-    const getUsers = async () => {
-        try {
-            const usersData = await get_users();
-            setUsers(usersData);
+            setTasks(Object.values(groupedTasks));  
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
@@ -150,7 +92,6 @@ const AppAllTasks = observer(() => {
 
     useEffect(() => {
         getTasks();
-        getUsers();
         getMatrix();
         getProjects();
     }, []);
@@ -158,10 +99,8 @@ const AppAllTasks = observer(() => {
     useEffect(() => {
         if (tasks && tasks.length > 0) {
             let filtered = tasks;
-            
             if (filterValue.trim() !== '') {
                 filtered = tasks.filter(task => {
-                    // 1. Проверяем поля самой задачи
                     let fieldValue = task[filterField];
                     if (filterField === 'userEmail') {
                         const userEmail = task.email || 'Неизвестный пользователь';
@@ -171,44 +110,38 @@ const AppAllTasks = observer(() => {
                         const formattedRepeat = formatRepeatDays(task.repeat_type_name, task.number_repeat);
                         return formattedRepeat.toLowerCase().includes(filterValue.toLowerCase());
                     }
-                    // Обработка дат в задаче
                     if ((filterField.includes('created_at') && fieldValue) || 
                         (filterField.includes('deadline') && fieldValue) || 
-                        (filterField.includes('period') && fieldValue)) {
+                        (filterField.includes('period') && fieldValue)) 
+                    {
                         const dateStr = new Date(fieldValue).toLocaleDateString('ru-RU');
                         if (dateStr.toLowerCase().includes(filterValue.toLowerCase())) {
                             return true;
                         }
                     }
-                    
-                    // Если нашли в задаче - возвращаем true
                     if (fieldValue !== undefined && fieldValue !== null) {
                         if (String(fieldValue).toLowerCase().includes(filterValue.toLowerCase())) {
                             return true;
                         }
                     }
-                    
-                    // 2. Если поле фильтрации относится к этапам - ищем в этапах
                     if (filterField.startsWith('stage_') && task.stages && task.stages.length > 0) {
-                        const stageField = filterField; // stage_name, stage_description и т.д.
+                        const stageField = filterField;
                         const foundInStages = task.stages.some(stage => {
                             let stageValue = stage[stageField];
-                            
-                            // Обработка дат в этапах
                             if ((stageField.includes('created_at') && stageValue) || 
                                 (stageField.includes('deadline') && stageValue) || 
-                                (stageField.includes('period') && stageValue)) {
+                                (stageField.includes('period') && stageValue)) 
+                            {
                                 const dateStr = new Date(stageValue).toLocaleDateString('ru-RU');
                                 return dateStr.toLowerCase().includes(filterValue.toLowerCase());
                             }
-                            
-                            if (stageValue === undefined || stageValue === null) return false;
+                            if (stageValue === undefined || stageValue === null) 
+                                return false;
                             return String(stageValue).toLowerCase().includes(filterValue.toLowerCase());
                         });
                         
                         if (foundInStages) return true;
                     }
-                    
                     return false;
                 });
             }
@@ -220,19 +153,15 @@ const AppAllTasks = observer(() => {
 
     const openModal = (modalType = null) => {
         setFormData({task_name: '', description: '', matrix_id: matrix[0].id, project_id: projects[0].id});
-        setIsNewTask(true);
         setModalType(modalType);
         setShowModal(true);
     };
-
     const closeModal = () => {
         setShowModal(false);
-        setIsNewTask(false);
         setModalType(null);
         setFormData({})
         setError('');
     };
-
     const handleChange = (e) => {
         const { name, value, type } = e.target;
         if (type === 'number') {
@@ -241,13 +170,7 @@ const AppAllTasks = observer(() => {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
     };
-
-    const handleColumnToggle = (column) => {
-        setVisibleColumns(prev => ({
-            ...prev,
-            [column]: !prev[column]
-        }));
-    };
+    const handleColumnToggle = (column) => {setVisibleColumns(prev => ({...prev, [column]: !prev[column]}));};
 
     const getColumnHeaders = () => {
         const headers = [];
@@ -313,9 +236,7 @@ const AppAllTasks = observer(() => {
     const handleSelectAll = () => {
         const allSelected = Object.values(visibleColumns).every(value => value === true);
         const newVisibleColumns = {};
-        Object.keys(visibleColumns).forEach(key => {
-            newVisibleColumns[key] = !allSelected;
-        });
+        Object.keys(visibleColumns).forEach(key => {newVisibleColumns[key] = !allSelected;});
         setVisibleColumns(newVisibleColumns);
     };
 
@@ -341,7 +262,11 @@ const AppAllTasks = observer(() => {
             setError(message);
         }
     };
-
+    const confirmDeleteTask = (task) => {
+        if (window.confirm(`Задача "${task.task_name}" будет удалена без возможности восстановления. Продолжить?`)) {
+            handleDeleteTask(task.id);
+        }
+    };
     const handleDeleteTask = async (taskId) => {
         try {
             const data = await deleteTask(taskId);
@@ -360,30 +285,20 @@ const AppAllTasks = observer(() => {
     const tasksByUser = filteredTasks.reduce((acc, task) => {
         const userEmail = task.email || 'Неизвестный пользователь';
         if (!acc[userEmail]) {
-            acc[userEmail] = {
-                userId: task.users_id,
-                tasks: []
-            };
+            acc[userEmail] = {userId: task.users_id, tasks: []};
         }
-        // Добавляем userEmail в каждую задачу для фильтрации
-        acc[userEmail].tasks.push({
-            ...task,
-            userEmail: userEmail
-        });
+        acc[userEmail].tasks.push({...task, userEmail: userEmail});
         return acc;
     }, {});
-
+    //Представление данных в таблице
     const renderCellValue = (item, key) => {
         let value = item[key];
         if (key === 'number_repeat')
             return formatRepeatDays(item.repeat_type_name, item[key])
-        // Специальная обработка для помидоров
         if (key === 'pomodoros_planned' || key === 'stage_pomodoros_planned') {
             if (value === -1 || value === null || value === undefined) return 'Не указано';
             return value;
         }
-        
-        // Обработка окончательного дедлайна
         if (key === 'final_deadline' || key === 'stage_final_deadline') {
             if (!value) return '';
             const date = new Date(value);
@@ -392,25 +307,20 @@ const AppAllTasks = observer(() => {
             }
             return date.toLocaleDateString('ru-RU');
         }
-        
-        // Обработка дедлайнов
         if (key === 'deadline' || key === 'stage_deadline') {
             if (!value) return '';
             return new Date(value).toLocaleDateString('ru-RU');
         }
-        
-        // Обработка дат
         if ((key.includes('created_at') || key.includes('period')) && value) {
             return new Date(value).toLocaleDateString('ru-RU');
         }
-        
         if (value === undefined || value === null) return '';
         if (Array.isArray(value)) return value.join(', ');
         return String(value);
     };
+    //Представление типов данных в таблице
     const formatRepeatDays = (repeatType, numberRepeat) => {
         if (!numberRepeat || numberRepeat.length === 0 || (numberRepeat.length === 1 && numberRepeat[0] === 0)) return 'Нет';
-        
         switch(repeatType) {
             case 'Ежедневно':
                 return 'Каждый день';
@@ -428,7 +338,7 @@ const AppAllTasks = observer(() => {
         }
     };
     const handleTaskClick = (task) => {
-        if (!task.min_time_period_dates_tasks) return alert('Переход невозможен')
+        if (!task.min_time_period_dates_tasks) return alert('Переход невозможен, сроки выполнения задачи выгружены')
         const returnDate = task.min_time_period_dates_tasks ? formatDateForSQL(task.min_time_period_dates_tasks) : new Date();
         navigate(`/project/${task.project_id}/task/${task.id}`, {
             state: {
@@ -438,11 +348,10 @@ const AppAllTasks = observer(() => {
         });
     };
     const handleStageClick = (task, stage) => {
-        if (!stage.min_time_period_dates_stages) return alert('Переход невозможен')
+        if (!stage.min_time_period_dates_stages) return alert('Переход невозможен, сроки выполнения задачи и этапа выгружены')
         const returnDate = stage.min_time_period_dates_stages
             ? formatDateForSQL(stage.min_time_period_dates_stages)
             : (task.min_time_period_dates_tasks ? formatDateForSQL(task.min_time_period_dates_tasks) : new Date());
-
         navigate(`/project/${task.project_id}/task/${task.id}/stage/${stage.id}`, {
             state: {
                 returnTo: 'AllTasks',
@@ -469,9 +378,9 @@ const AppAllTasks = observer(() => {
                 </button>
             </div>
 
-            <ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Создание задачи'} formData={formData} onChange={handleChange} 
-                onSave={handleTask} error={error} isNew={true} fields={['task_name', 'description', 'projects_select']} users={projects}
-            />
+            <ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Создание задачи'} formData={formData} 
+                onChange={handleChange} onSave={handleTask} error={error} isNew={true} 
+                fields={['task_name', 'description', 'projects_select', 'deadline']} users={projects}/>
 
             <div className="profile-header">
                 <h1 className="h1-prof">Управление задачами пользователей</h1>
@@ -483,7 +392,6 @@ const AppAllTasks = observer(() => {
                 </Button>
             </div>
 
-            {/* Блок выбора колонок */}
             <div className="columns-selector">
                 <div className="profile-header">
                     <h2 className="h1-prof">Выберите колонки для отображения:</h2>
@@ -551,7 +459,6 @@ const AppAllTasks = observer(() => {
                 </div>
             </div>
             
-            {/* Блок фильтрации */}
             <div className="filter-section">
                 <div className="section-select">
                     <h2 className="h1-prof">Фильтрация</h2>
@@ -590,7 +497,6 @@ const AppAllTasks = observer(() => {
                 </div>
             </div>
             
-            {/* Таблица с группировкой */}
             <div className="users-table-container">
                 <Table striped bordered hover responsive className="users-table">
                     <thead>
@@ -603,85 +509,47 @@ const AppAllTasks = observer(() => {
                     </thead>
                     <tbody>
                         {Object.entries(tasksByUser).map(([userEmail, userData]) => {
-                            const userTasks = userData.tasks;
                             const taskKeys = getTaskColumnKeys();
                             const stageKeys = getStageColumnKeys();
-                            const hasStageColumns = stageKeys.length > 0;
-                            
                             return (
                                 <React.Fragment key={userEmail}>
-                                    {/* Заголовок пользователя */}
                                     <tr className="user-group-header">
                                         <td colSpan={getColumnHeaders().length + 1} className="user-header-cell">
                                             <strong>Пользователь: {userEmail}</strong>
                                         </td>
                                     </tr>
-                                    
-                                    {/* Задачи пользователя */}
-                                    {userTasks.length > 0 ? (
-                                        userTasks.map((task) => {
+                                    {userData.tasks.length > 0 ? (
+                                        userData.tasks.map((task) => {
                                             const taskStages = task.stages || [];
-                                            const hasStages = taskStages.length > 0;
-                                            
                                             return (
                                                 <React.Fragment key={`task-${task.id}`}>
-                                                    {/* Строка задачи */}
                                                     <tr className="task-row">
                                                         {taskKeys.map((key, colIndex) => (
                                                             <td key={colIndex} className="task-cell">
                                                                 {renderCellValue(task, key)}
                                                             </td>
                                                         ))}
-                                                        {/* Пустые ячейки для колонок этапов */}
-                                                        {hasStageColumns && stageKeys.map((_, idx) => (
+                                                        {stageKeys.length > 0 && stageKeys.map((_, idx) => (
                                                             <td key={`stage-empty-${idx}`} className="task-cell"></td>
                                                         ))}
                                                         <td className="actions-cell">
-                                                            <Button 
-                                                                variant="primary" 
-                                                                size="sm" 
-                                                                onClick={() => handleTaskClick(task)}
-                                                                style={{ marginRight: '5px' }}
-                                                            >
-                                                                Перейти
-                                                            </Button>
-                                                            <Button 
-                                                                variant="danger" 
-                                                                size="sm" 
-                                                                onClick={() => {
-                                                                    if (window.confirm(`Задача "${task.task_name}" будет удалена без возможности восстановления. Продолжить?`)) {
-                                                                        handleDeleteTask(task.id);
-                                                                    }
-                                                                }}
-                                                            >
-                                                                Удалить
-                                                            </Button>
+                                                            <Button variant="primary" onClick={() => handleTaskClick(task)}>Перейти</Button>
+                                                            <Button variant="danger" size="sm" onClick={() => confirmDeleteTask(task)}>Удалить</Button>
                                                         </td>
                                                     </tr>
-                                                    
-                                                    {/* Этапы задачи (с отступом) */}
-                                                    {hasStages && taskStages.map((stage) => (
+                                                    {taskStages.length > 0 && taskStages.map((stage) => (
                                                         <tr key={`stage-${task.id}-${stage.id}`} className="stage-row">
-                                                            {/* Пустые ячейки для колонок задачи */}
                                                             {taskKeys.map((_, idx) => (
                                                                 <td key={`task-empty-${idx}`} className="stage-cell stage-indent"></td>
                                                             ))}
-                                                            {/* Ячейки для этапов */}
                                                             {stageKeys.map((key, idx) => (
                                                                 <td key={idx} className="stage-cell stage-indent">
                                                                     {renderCellValue(stage, key)}
                                                                 </td>
                                                             ))}
                                                             <td>
-                                                            <Button 
-                                                                variant="info" 
-                                                                size="sm"
-                                                                onClick={() => handleStageClick(task, stage)}
-                                                            >
-                                                                Перейти к этапу
-                                                            </Button>
+                                                            <Button variant="info" onClick={() => handleStageClick(task, stage)}>Перейти к этапу</Button>
                                                             </td>
-                                                            
                                                         </tr>
                                                     ))}
                                                 </React.Fragment>

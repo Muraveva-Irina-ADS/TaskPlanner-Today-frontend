@@ -119,7 +119,8 @@ const AppCompleteTasks = () => {
                 <h1 className="h1-prof">Завершенные задачи</h1>
             </div>
             {error && <div className="error-message">{error}</div>}
-                <div className="filter-section">
+                
+            <div className="filter-section">
                 <div className="section-select">
                     <h2 className="h1-prof">Фильтрация</h2>
                     <InputGroup className="mb-3">
@@ -141,6 +142,7 @@ const AppCompleteTasks = () => {
                     </InputGroup>
                 </div>
             </div>
+            
             <div className="projects-grid">
                 {Object.values(tasksByProject).map((projectGroup) => (
                     <React.Fragment key={projectGroup.projectName}>

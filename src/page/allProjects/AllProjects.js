@@ -20,14 +20,8 @@ const AppAllProjects = observer(() => {
     const [modalType, setModalType] = useState(null);   
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const [visibleColumns, setVisibleColumns] = useState({
-            users_id: true,
-            project_name: true,
-            description: false,
-            color: true,
-            is_active: true,
-            created_at: false
-    });    
+    const [visibleColumns, setVisibleColumns] = useState({users_id: true, project_name: true, description: false, color: true,
+        is_active: true, created_at: false});    
     const [filterField, setFilterField] = useState('email');
     const [filterValue, setFilterValue] = useState('');
     const [filteredProjects, setFilteredProjects] = useState([]);
@@ -129,12 +123,7 @@ const AppAllProjects = observer(() => {
         }
     };
     
-    const handleColumnToggle = (column) => {
-        setVisibleColumns(prev => ({
-            ...prev,
-            [column]: !prev[column]
-        }));
-    };
+    const handleColumnToggle = (column) => {setVisibleColumns(prev => ({...prev, [column]: !prev[column]}));};
     
     const getColumnHeaders = () => {
         const headers = [];
@@ -153,19 +142,26 @@ const AppAllProjects = observer(() => {
         if (visibleColumns.created_at) keys.push('created_at');
         return keys;
     };
+    const getFormattedValue = (project, key) => {
+        let value = project[key];
+        if (key === 'created_at' && value) {
+            return new Date(value).toLocaleDateString('ru-RU');
+        }
+        if (key === 'is_active') {
+            return value ? 'Активен' : 'Не активен';
+        }
+        return value || '-';
+    };
     const handleSelectAll = () => {
         const allSelected = Object.values(visibleColumns).every(value => value === true);
         const newVisibleColumns = {};
-        Object.keys(visibleColumns).forEach(key => {
-            newVisibleColumns[key] = !allSelected;
-        });
-        
+        Object.keys(visibleColumns).forEach(key => {newVisibleColumns[key] = !allSelected;});
         setVisibleColumns(newVisibleColumns);
     };
     const handleProject = () => {
         if (!formData.project_name || !formData.description) {
-                setError('Все поля должны быть заполнены');
-                return;
+            setError('Все поля должны быть заполнены');
+            return;
         }
         if (isNewProject)
             handleAddProject();
@@ -200,6 +196,11 @@ const AppAllProjects = observer(() => {
             setError(message);
         }
     }
+    const confirmDeleteProject = (project) => {
+        if (window.confirm(`Проект ${project.project_name} будет удален без возможности восстановления. Продолжить?`)) {
+            handleDeleteProject(project.id);
+        }
+    };
     const handleDeleteProject = async (id) => {
         try {
               let data;
@@ -213,15 +214,14 @@ const AppAllProjects = observer(() => {
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
           }
-        };  
-        const projectsByUser = filteredProjects.reduce((acc, project) => {
-            const userEmail = project.email || 'Неизвестный пользователь';
-            if (!acc[userEmail]) {
-                acc[userEmail] = [];
-            }
-            acc[userEmail].push(project);
-            return acc;
-        }, {});
+    };  
+    const projectsByUser = filteredProjects.reduce((acc, project) => {
+        const userEmail = project.email || 'Неизвестный пользователь';
+        if (!acc[userEmail])
+            acc[userEmail] = [];
+        acc[userEmail].push(project);
+        return acc;
+    }, {});
     return (
         <div className="project-wrapper">
             <NavBar />
@@ -284,18 +284,18 @@ const AppAllProjects = observer(() => {
             </div>
             
             <div className="users-table-container">
-            <Table striped bordered hover responsive className="users-table">
-            <thead>
-            <tr>
-               {getColumnHeaders().map((header, index) => (
-                <th key={index}>{header}</th>))}
-                <th className="actions-header">Действия</th>
-            </tr>
-            </thead>
-            <tbody>
-            {Object.entries(projectsByUser).map(([userEmail, userProjects]) => {
-                const realProjects = userProjects.filter(p => p.id !== null);
-                    return (
+                <Table striped bordered hover responsive className="users-table">
+                    <thead>
+                        <tr>
+                        {getColumnHeaders().map((header, index) => (
+                            <th key={index}>{header}</th>))}
+                            <th className="actions-header">Действия</th>
+                        </tr>
+                    </thead>
+                <tbody>
+                {Object.entries(projectsByUser).map(([userEmail, userProjects]) => {
+                    const realProjects = userProjects.filter(p => p.id !== null);
+                        return (
                             <React.Fragment key={userEmail}>
                                 <tr className="user-group-header">
                                     <td colSpan={getColumnHeaders().length + 1} className="actions-cell">
@@ -304,23 +304,13 @@ const AppAllProjects = observer(() => {
                                 </tr>
                                 {realProjects.length > 0 ? (
                                     realProjects.map((project) => (
-                                        <tr key={project.id} className="project-row" 
-                                        style={{ color: visibleColumns.color ? project.color : 'black' }}>
-                                            {getColumnKeys().map((key, colIndex) => {
-                                                let value = project[key];
-                                                if (key === 'created_at' && value) {
-                                                    value = new Date(value).toLocaleDateString('ru-RU');
-                                                }
-                                                if (key === 'is_active') {
-                                                    value = value ? 'Активен' : 'Не активен';
-                                                }
-                                                return <td key={colIndex} className="actions-cell">{value || '-'}</td>;
-                                            })}
-                                            
+                                        <tr key={project.id} className="project-row" style={{ color: visibleColumns.color ? project.color : 'black' }}>
+                                            {getColumnKeys().map((key, colIndex) => (
+                                                <td key={colIndex} className="actions-cell">{getFormattedValue(project, key)}</td>
+                                            ))}
                                             <td className="actions-cell">
                                                 <Button variant="primary" onClick={() => openModal(project, 'project_modal')}>Редактировать</Button>
-                                                <Button variant="primary" onClick={() => {if (window.confirm(`Проект ${project.project_name} будет удален без возможности восстановления. Продолжить?`)) {
-                                                    handleDeleteProject(project.id)}}}>Удалить</Button>
+                                                <Button variant="primary" onClick={() => confirmDeleteProject(project)}>Удалить</Button>
                                             </td>
                                         </tr>
                                     ))
@@ -335,18 +325,16 @@ const AppAllProjects = observer(() => {
                         )})}
                         {filteredProjects.length === 0 && (
                             <tr>
-                                <td colSpan={getColumnHeaders().length + 1} className="text-center">
-                                    Нет данных для отображения
-                                </td>
+                                <td colSpan={getColumnHeaders().length + 1} className="text-center">Нет данных для отображения</td>
                             </tr>
                         )}
-            </tbody>
-        </Table>
+                </tbody>
+                </Table>
+            </div>
+        </div>
     </div>
-    </div>
-    </div>
-    </div>
-    );
+</div>
+);
 });
 
 export default AppAllProjects;

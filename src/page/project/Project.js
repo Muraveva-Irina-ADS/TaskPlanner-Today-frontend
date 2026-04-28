@@ -1,8 +1,7 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {get_projects, project_post, project_delete, get_profile_settings_email, get_tasks_time_pomodoro, get_PomodoroWithoutTasks, 
     put_statusExec } from "../../api/commonApi";
 import { observer } from 'mobx-react-lite';
-import { Context } from '../../index';
 import NavBar from '../../components/NavBar';
 import { useNavigate } from 'react-router-dom';
 import { Button, InputGroup, Form, FormControl } from 'react-bootstrap';
@@ -14,7 +13,6 @@ import HelpTip from '../../components/HelpTip';
 import toast from 'react-hot-toast';
 
 const AppProject = observer(() => {
-    const { user } = useContext(Context);
     const navigate = useNavigate();
     const [projects, setProjects] = useState([]); 
     const [yourSettings, setYourSettings] = useState();
@@ -122,6 +120,7 @@ const AppProject = observer(() => {
             setFilteredProjects([]);
         }
     }, [projects, filterField, filterValue]);
+    
     const handleProjectClick = (projectId) => {
         navigate(`/project/${projectId}`);
     };
