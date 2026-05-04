@@ -27,6 +27,7 @@ const AppAllProjects = observer(() => {
     const [filteredProjects, setFilteredProjects] = useState([]);
     const [users, setUsers] = useState([]);
 
+    //Получение информации о проектах всех пользователей
     const getProjects = async () => {
         try {
             const projects = await get_projects_with_user();
@@ -35,8 +36,8 @@ const AppAllProjects = observer(() => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Получение информации об основных данных всех пользователей
     const getUsers = async () => {
         try {
             const users = await get_users();
@@ -45,18 +46,16 @@ const AppAllProjects = observer(() => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций
     useEffect(() => {
         getProjects();
         getUsers();
     }, []);
-    
-    
+    //Хук useEffect для фильтрации списка проектов в массив filteredProjects
     useEffect(() => {
         if (projects && projects.length > 0) {
             let filtered = projects;
-            
             if (filterValue.trim() !== '') {
                 filtered = projects.filter(project => {
                     const fieldValue = project[filterField];
@@ -82,7 +81,7 @@ const AppAllProjects = observer(() => {
             setFilteredProjects([]);
         }
     }, [projects, filterField, filterValue]);
-    
+    //Функция открытия модального окна
     const openModal = (userData = null, modalType = null) => {
         if(userData){
             setFormData({...userData});
@@ -96,7 +95,7 @@ const AppAllProjects = observer(() => {
         setModalType(modalType);
         setShowModal(true);
     };
-    
+    //Функция закрытия модального окна
     const closeModal = () => {
         setShowModal(false);
         setSelectedProject(null);
@@ -104,14 +103,12 @@ const AppAllProjects = observer(() => {
         setModalType(null);
         setError('');
     };
-    
+    //Функция для изменения состояния полей формы в модальном окне
     const handleChange = (e, index = null) => {
         const { name, value, type } = e.target;
         if (index !== null && Array.isArray(formData)) {
             const updatedArray = [...formData];
-            updatedArray[index] = {
-                ...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
-            };
+            updatedArray[index] = {...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value};
             setFormData({...formData});
         }
         else {
@@ -122,9 +119,9 @@ const AppAllProjects = observer(() => {
             }
         }
     };
-    
+    //Вызывается при изменении Form.Check в блоке колонок для отображения
     const handleColumnToggle = (column) => {setVisibleColumns(prev => ({...prev, [column]: !prev[column]}));};
-    
+    //Возвращает массив заголовков колонок таблицы в зависимости от выбранных пользователем видимых полей
     const getColumnHeaders = () => {
         const headers = [];
         if (visibleColumns.project_name) headers.push('Название проекта');
@@ -133,7 +130,7 @@ const AppAllProjects = observer(() => {
         if (visibleColumns.created_at) headers.push('Создан'); 
         return headers;
     };
-
+    //Возвращает массив ключей для доступа к данным в таблице, соответствующих выбранным видимым колонкам
     const getColumnKeys = () => {
         const keys = []; 
         if (visibleColumns.project_name) keys.push('project_name');
@@ -142,6 +139,7 @@ const AppAllProjects = observer(() => {
         if (visibleColumns.created_at) keys.push('created_at');
         return keys;
     };
+    //Форматирует значения некоторых полей и возвращает значение для отображения в таблице
     const getFormattedValue = (project, key) => {
         let value = project[key];
         if (key === 'created_at' && value) {
@@ -152,12 +150,14 @@ const AppAllProjects = observer(() => {
         }
         return value || '-';
     };
+    //Все Form.Check получают значение true
     const handleSelectAll = () => {
         const allSelected = Object.values(visibleColumns).every(value => value === true);
         const newVisibleColumns = {};
         Object.keys(visibleColumns).forEach(key => {newVisibleColumns[key] = !allSelected;});
         setVisibleColumns(newVisibleColumns);
     };
+    //Перенаправляет в функцию для добавления или изменения проекта в зависимости от значения isNewProject
     const handleProject = () => {
         if (!formData.project_name || !formData.description) {
             setError('Все поля должны быть заполнены');
@@ -168,9 +168,10 @@ const AppAllProjects = observer(() => {
         else
             handleSaveProject();
     }
+    //Вызов API-функции для добавления данных в таблицу projects (проекты)
     const handleAddProject = async() => {
         try {
-        const data = await project_post(formData.users_id, formData.project_name, formData.description, formData.color, formData.is_active);
+        const data = await project_post(formData);
             if (data) {
                 toast.success('Добавлено');                
                 closeModal();
@@ -182,9 +183,10 @@ const AppAllProjects = observer(() => {
             setError(message);
         }
     }
+    //Вызов API-функции для изменения данных в таблице projects (проекты)
     const handleSaveProject = async() => {
         try {
-            const data = await project_put(selectedProject.id, formData.users_id, formData.project_name, formData.description, formData.color, formData.is_active);
+            const data = await project_put(selectedProject.id, formData);
                 if (data) {
                     toast.success('Сохранено');
                     closeModal();
@@ -196,25 +198,27 @@ const AppAllProjects = observer(() => {
             setError(message);
         }
     }
+    //Отображается диалоговое окно подтверждения удаления проекта и при согласии администратора вызывает функцию handleDeleteProject
     const confirmDeleteProject = (project) => {
         if (window.confirm(`Проект ${project.project_name} будет удален без возможности восстановления. Продолжить?`)) {
             handleDeleteProject(project.id);
         }
     };
+    //Вызов API-функции для удаления проекта из таблицы projects (проекты)
     const handleDeleteProject = async (id) => {
         try {
-              let data;
-              data = await project_delete(id);
-              if (data) {
+            let data;
+            data = await project_delete(id);
+            if (data) {
                 toast.success('Удалено'); 
                 getProjects();
-              }
-          } catch (e) {
+            }
+        } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-          }
-    };  
+    }};  
+    //Группирует проекты по пользователям. В качестве ключа используется email пользователя, а значение — массив его проектов
     const projectsByUser = filteredProjects.reduce((acc, project) => {
         const userEmail = project.email || 'Неизвестный пользователь';
         if (!acc[userEmail])
@@ -226,115 +230,116 @@ const AppAllProjects = observer(() => {
         <div className="project-wrapper">
             <NavBar />
             <div className="project-layout">
-            <Navigate/>
-            <div className="project-content">
-            <div className="back-button-container">
-                <button onClick={() => navigate(-1)} className="back-button">
-                <img src={backIcon} className="back-icon" alt="Назад"/>Назад</button>
-            </div>
-            <ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={isNewProject ? 'Добавление нового проекта' : 'Редактирование данных о проекте'}
-                        formData={formData} onChange={handleChange} onSave={handleProject} error={error} isNew={isNewProject}
-                        fields={['users_id', 'project_name', 'description', 'is_active', 'color']} users={users}/>
-
-            <div className="profile-header">
-                <h1 className="h1-prof">Управление проектами пользователей</h1>
-            </div>
-            
-            <div className="text-end mb-3">
-                <Button variant="primary" style={{height: '60px'}} onClick={() => openModal(null, 'project_modal')}>Добавить проект</Button>
-            </div>
-
-            <div className="columns-selector">
-                <div className="profile-header">
-                    <h2 className="h1-prof">Выберите колонки для отображения:</h2>
-                </div>
-                <div className="profile-grid">
-                    <Form.Check className="profile-field1" type="checkbox" label="Выделить все" 
-                        checked={Object.values(visibleColumns).every(value => value === true)} onChange={handleSelectAll} />
-                    <Form.Check className="profile-field1" type="checkbox" label="Название" 
-                        checked={visibleColumns.project_name} onChange={() => handleColumnToggle('project_name')} />
-                    <Form.Check className="profile-field1" type="checkbox" label="Описание" 
-                        checked={visibleColumns.description} onChange={() => handleColumnToggle('description')} />
-                    <Form.Check className="profile-field1" type="checkbox" label="Цвет" 
-                        checked={visibleColumns.color} onChange={() => handleColumnToggle('color')} />
-                    <Form.Check className="profile-field1" type="checkbox" label="Активен ли" 
-                        checked={visibleColumns.is_active} onChange={() => handleColumnToggle('is_active')} />                        
-                    <Form.Check className="profile-field1" type="checkbox" label="Создан" 
-                        checked={visibleColumns.created_at} onChange={() => handleColumnToggle('created_at')} />
-                </div>
-            </div>
-            
-            <div className="filter-section">
-                <div className="section-select">
-                    <h2 className="h1-prof">Фильтрация</h2>
-                    <InputGroup className="mb-3">
-                        <InputGroup.Text className="field-label">Поле для фильтрации</InputGroup.Text>
-                        <Form.Select className="mt-3 select" value={filterField} onChange={(e) => setFilterField(e.target.value)}>
-                            <option value="users_id">Почта пользователя/администратора</option>
-                            <option value="project_name">Название проекта</option>
-                            <option value="description">Описание</option>
-                            <option value="is_active">Активен ли</option>
-                            <option value="created_at">Создан</option>
-                        </Form.Select>
-                        <InputGroup.Text className="field-label">Значение</InputGroup.Text>
-                        <FormControl className="mt-3 select" placeholder="Введите значение для поиска..."
-                            value={filterValue} onChange={(e) => setFilterValue(e.target.value)} />
-                    </InputGroup>
-                </div>
-            </div>
-            
-            <div className="users-table-container">
-                <Table striped bordered hover responsive className="users-table">
-                    <thead>
-                        <tr>
-                        {getColumnHeaders().map((header, index) => (
-                            <th key={index}>{header}</th>))}
-                            <th className="actions-header">Действия</th>
-                        </tr>
-                    </thead>
-                <tbody>
-                {Object.entries(projectsByUser).map(([userEmail, userProjects]) => {
-                    const realProjects = userProjects.filter(p => p.id !== null);
-                        return (
-                            <React.Fragment key={userEmail}>
-                                <tr className="user-group-header">
-                                    <td colSpan={getColumnHeaders().length + 1} className="actions-cell">
-                                        <strong>Пользователь: {userEmail}</strong>
-                                    </td>
+                <Navigate/>
+                <div className="project-content">
+                    {/*Кнопка Назад*/}
+                    <div className="back-button-container">
+                        <button onClick={() => navigate(-1)} className="back-button">
+                        <img src={backIcon} className="back-icon" alt="Назад"/>Назад</button>
+                    </div>
+                    <ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={isNewProject ? 'Добавление нового проекта' : 'Редактирование данных о проекте'}
+                                formData={formData} onChange={handleChange} onSave={handleProject} error={error} isNew={isNewProject}
+                                fields={['users_id', 'project_name', 'description', 'is_active', 'color']} users={users}/>
+                    {/*Заголовок страницы*/}
+                    <div className="profile-header">
+                        <h1 className="h1-prof">Управление проектами пользователей</h1>
+                    </div>
+                    {/*Кнопка Добавить проект*/}
+                    <div className="text-end mb-3">
+                        <Button variant="primary" style={{height: '60px'}} onClick={() => openModal(null, 'project_modal')}>Добавить проект</Button>
+                    </div>
+                    {/*Блок для выбора колонок, которые будут отображены в таблице*/}
+                    <div className="columns-selector">
+                        <div className="profile-header">
+                            <h2 className="h1-prof">Выберите колонки для отображения:</h2>
+                        </div>
+                        <div className="profile-grid">
+                            <Form.Check className="profile-field1" type="checkbox" label="Выделить все" 
+                                checked={Object.values(visibleColumns).every(value => value === true)} onChange={handleSelectAll} />
+                            <Form.Check className="profile-field1" type="checkbox" label="Название" 
+                                checked={visibleColumns.project_name} onChange={() => handleColumnToggle('project_name')} />
+                            <Form.Check className="profile-field1" type="checkbox" label="Описание" 
+                                checked={visibleColumns.description} onChange={() => handleColumnToggle('description')} />
+                            <Form.Check className="profile-field1" type="checkbox" label="Цвет" 
+                                checked={visibleColumns.color} onChange={() => handleColumnToggle('color')} />
+                            <Form.Check className="profile-field1" type="checkbox" label="Активен ли" 
+                                checked={visibleColumns.is_active} onChange={() => handleColumnToggle('is_active')} />                        
+                            <Form.Check className="profile-field1" type="checkbox" label="Создан" 
+                                checked={visibleColumns.created_at} onChange={() => handleColumnToggle('created_at')} />
+                        </div>
+                    </div>
+                    {/*Блок фильтрации*/}
+                    <div className="filter-section">
+                        <div className="section-select">
+                            <h2 className="h1-prof">Фильтрация</h2>
+                            <InputGroup className="mb-3">
+                                <InputGroup.Text className="field-label">Поле для фильтрации</InputGroup.Text>
+                                <Form.Select className="mt-3 select" value={filterField} onChange={(e) => setFilterField(e.target.value)}>
+                                    <option value="users_id">Почта пользователя/администратора</option>
+                                    <option value="project_name">Название проекта</option>
+                                    <option value="description">Описание</option>
+                                    <option value="is_active">Активен ли</option>
+                                    <option value="created_at">Создан</option>
+                                </Form.Select>
+                                <InputGroup.Text className="field-label">Значение</InputGroup.Text>
+                                <FormControl className="mt-3 select" placeholder="Введите значение для поиска..."
+                                    value={filterValue} onChange={(e) => setFilterValue(e.target.value)} />
+                            </InputGroup>
+                        </div>
+                    </div>
+                    {/*Таблица*/}
+                    <div className="users-table-container">
+                        <Table striped bordered hover responsive className="users-table">
+                            {/*Заголовки колонок таблицы*/}
+                            <thead>
+                                <tr>
+                                {getColumnHeaders().map((header, index) => (
+                                    <th key={index}>{header}</th>))}
+                                    <th className="actions-header">Действия</th>
                                 </tr>
-                                {realProjects.length > 0 ? (
-                                    realProjects.map((project) => (
-                                        <tr key={project.id} className="project-row" style={{ color: visibleColumns.color ? project.color : 'black' }}>
-                                            {getColumnKeys().map((key, colIndex) => (
-                                                <td key={colIndex} className="actions-cell">{getFormattedValue(project, key)}</td>
-                                            ))}
-                                            <td className="actions-cell">
-                                                <Button variant="primary" onClick={() => openModal(project, 'project_modal')}>Редактировать</Button>
-                                                <Button variant="primary" onClick={() => confirmDeleteProject(project)}>Удалить</Button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr className="no-projects-row">
-                                        <td colSpan={getColumnHeaders().length + 1} className="actions-cell">
-                                            <span className="no-projects-message">У пользователя нет проектов</span>
-                                        </td>
-                                    </tr>
-                                )}
-                            </React.Fragment>
-                        )})}
-                        {filteredProjects.length === 0 && (
-                            <tr>
-                                <td colSpan={getColumnHeaders().length + 1} className="text-center">Нет данных для отображения</td>
-                            </tr>
-                        )}
-                </tbody>
-                </Table>
+                            </thead>
+                        <tbody>
+                            {/*Отображение строк с информацией о проекте*/}
+                            {Object.entries(projectsByUser).map(([userEmail, userProjects]) => {
+                                const realProjects = userProjects.filter(p => p.id !== null);
+                                    return (
+                                        <React.Fragment key={userEmail}>
+                                            <tr className="user-group-header">
+                                                <td colSpan={getColumnHeaders().length + 1} className="actions-cell">
+                                                    <strong>Пользователь: {userEmail}</strong>
+                                                </td>
+                                            </tr>
+                                            {realProjects.length > 0 ? (
+                                                realProjects.map((project) => (
+                                                    <tr key={project.id} className="project-row" style={{ color: visibleColumns.color ? project.color : 'black' }}>
+                                                        {getColumnKeys().map((key, colIndex) => (
+                                                            <td key={colIndex} className="actions-cell">{getFormattedValue(project, key)}</td>
+                                                        ))}
+                                                        <td className="actions-cell">
+                                                            <Button variant="primary" onClick={() => openModal(project, 'project_modal')}>Редактировать</Button>
+                                                            <Button variant="primary" onClick={() => confirmDeleteProject(project)}>Удалить</Button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr className="no-projects-row">
+                                                    <td colSpan={getColumnHeaders().length + 1} className="actions-cell">
+                                                        <span className="no-projects-message">У пользователя нет проектов</span>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                            )})}
+                            {filteredProjects.length === 0 && (
+                                <tr>
+                                    <td colSpan={getColumnHeaders().length + 1} className="text-center">Нет данных для отображения</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-);
-});
+    </div>);});
 
 export default AppAllProjects;

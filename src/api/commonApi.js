@@ -8,9 +8,6 @@ export const registration = async (first_name, last_name, email, password, phone
     const { data } = await $authHost.post('/api/registration', { first_name, last_name, email, password, phone_number, birthday });
     return data; // Возвращаем данные от сервера
 }
-
-
-
 export const get_profile_settings_email = async () => {
     const { data } = await $host.get(`/api/profile_settings_email/`);
     return data; // Возвращаем данные от сервера
@@ -27,16 +24,16 @@ export const profile_settings_put = async (id, formData) => {
     const { data } = await $host.put(`/api/settings_put/${id}`, {formData});
     return data; // Возвращаем данные от сервера
 }
-export const get_profile_matrix_email = async () => {
-    const { data } = await $host.get(`/api/profile_matrix_email/`);
+export const get_profile_matrix_email = async (id) => {
+    const { data } = await $host.get(`/api/profile_matrix_email/${id}`);
     return data; // Возвращаем данные от сервера
 }
 export const profile_matrix_put = async (id, users_id, matrix_part, name, description, color) => {
     const { data } = await $host.put(`/api/matrix_put/${id}`, {users_id, matrix_part, name, description, color});
     return data; // Возвращаем данные от сервера
 }
-export const get_profile_status_email = async () => {
-    const { data } = await $host.get(`/api/profile_status_email/`);
+export const get_profile_status_email = async (id) => {
+    const { data } = await $host.get(`/api/profile_status_email/${id}`);
     return data; // Возвращаем данные от сервера
 }
 export const get_admin_settings_note = async (note) => {
@@ -59,9 +56,6 @@ export const profile_status_add = async (status_name, users_id, system_code) => 
     const { data } = await $host.post(`/api/status_add/`, {status_name, users_id, system_code});
     return data; // Возвращаем данные от сервера
 }
-
-
-
 export const get_settings = async () => {
     const { data } = await $host.get(`/api/settings/`);
     return data; // Возвращаем данные от сервера
@@ -72,6 +66,10 @@ export const get_users = async () => {
 }
 export const get_matrix = async () => {
     const { data } = await $host.get(`/api/matrix/`);
+    return data; // Возвращаем данные от сервера
+}
+export const get_matrix_from_project_id = async (project_id) => {
+    const { data } = await $host.get(`/api/matrix_from_project_id/${project_id}`);
     return data; // Возвращаем данные от сервера
 }
 export const get_status = async () => {
@@ -86,16 +84,12 @@ export const user_put = async (id, userData) => {
     const { data } = await $host.put(`/api/user_put/${id}`, {userData});
     return data; // Возвращаем данные от сервера
 }
-
-
-
-
-export const get_projects = async () => {
-    const { data } = await $host.get(`/api/projects/`);
+export const get_projects = async (id) => {
+    const { data } = await $host.get(`/api/projects/${id}`);
     return data; // Возвращаем данные от сервера
 }
-export const project_post = async (project_name, description, color, is_active) => {
-    const { data } = await $host.post(`/api/project_add/`, {project_name, description, color, is_active});
+export const project_post = async (formData) => {
+    const { data } = await $host.post(`/api/project_add/`, {formData});
     return data; // Возвращаем данные от сервера
 }
 export const project_delete = async (id) => {
@@ -106,12 +100,10 @@ export const get_projects_with_user = async () => {
     const { data } = await $host.get(`/api/projects_with_users/`);
     return data; // Возвращаем данные от сервера
 }
-export const project_put = async (id, users_id, project_name, description, color, is_active) => {
-    const { data } = await $host.put(`/api/projects_put/${id}`, {users_id, project_name, description, color, is_active});
+export const project_put = async (id, formData) => {
+    const { data } = await $host.put(`/api/projects_put/${id}`, {formData});
     return data; // Возвращаем данные от сервера
 }
-
-
 export const get_project_by_id = async (id) => {
     const { data } = await $host.get(`/api/project/${id}`);
     return data; // Возвращаем данные от сервера
@@ -128,8 +120,8 @@ export const get_tasks_for_gantt = async () => {
     const { data } = await $host.get(`/api/tasks_for_gantt`);
     return data; // Возвращаем данные от сервера
 }
-export const get_dates_stages_history = async (startDate, endDate) => {
-    const { data } = await $host.get(`/api/dates_stages_history_to_user?startDate=${startDate}&endDate=${endDate}`);
+export const get_dates_tasks_history = async (startDate, endDate) => {
+    const { data } = await $host.get(`/api/dates_tasks_history_to_user?startDate=${startDate}&endDate=${endDate}`);
     return data;
 };
 export const get_datesTasks = async () => {

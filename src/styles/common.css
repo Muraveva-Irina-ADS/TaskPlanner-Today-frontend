@@ -468,7 +468,7 @@ select {
     margin-bottom: 5px;
     font-size: 14px;
 }
-.matrix-settings-section {
+.settings-section {
     width: 100%;
     margin-top: 30px;
 }
@@ -628,7 +628,16 @@ select {
     opacity: 0.95;
 }
 
-
+.logo {
+    font-size: 28px;
+    font-weight: 800; 
+    background: linear-gradient(135deg, #4CAF50, #81C784, #2E7D32);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    letter-spacing: 1px;
+    font-family: Inter, sans-serif;
+}
 
 
 

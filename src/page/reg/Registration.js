@@ -22,6 +22,7 @@ const AppRegistration = observer(() => {
     const [birthday, setBirthday] = useState('');
     const [error, setError] = useState('');
 
+    //Функция для представления даты в формате DD.MM.YYYY
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         if (isNaN(date)) return '';
@@ -30,9 +31,9 @@ const AppRegistration = observer(() => {
         const year = date.getFullYear();
         return `${day}.${month}.${year}`;
     };
+    //Валидация полей основных данных пользователя 
     const validate = () => {
-        if (!last_name.trim() || !first_name.trim() || !email.trim() || !password.trim() ||
-            !repeat_password.trim() || !phone_number.trim()) {
+        if (!last_name.trim() || !first_name.trim() || !email.trim() || !password.trim() || !repeat_password.trim() || !phone_number.trim()) {
             setError('Пожалуйста, заполните все поля.');
             return false;
         }
@@ -79,7 +80,7 @@ const AppRegistration = observer(() => {
         setError('');
         return true;
     };
-
+    //Валидация полей основных данных и вызов API-функции для регистрации пользователя 
     const click = async () => {
         if (!validate()) return;
         try {
@@ -104,73 +105,38 @@ const AppRegistration = observer(() => {
         <Container className="reg-container" >
             <Card className="reg-card p-5">
                 <h1 className="m-auto">Добро пожаловать в задачник</h1>  
-                <span style={{fontSize: '28px', fontWeight: '800', background: 'linear-gradient(135deg, #4CAF50, #81C784, #2E7D32)',
-                            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', letterSpacing: '1px', fontFamily: "'Inter', sans-serif"}}>
-                    СЕГОДНЯ
-                </span>              
+                <span className="logo">СЕГОДНЯ</span>              
                 <h2 className="m-auto">Регистрация</h2>
-                    <Form className="d-flex flex-column">
+                <Form className="d-flex flex-column">
                     {error && <div className="error-message">{error}</div>}
                     <div><label className="d-block">Введите фамилию</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Введите фамилию..."
-                        value={last_name}
-                        onChange={e => setLastName(e.target.value)}
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" placeholder="Введите фамилию..." value={last_name} onChange={e => setLastName(e.target.value)}/>
+                    </div>
                     <div><label className="d-block">Введите имя</label><br/>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Введите имя..."
-                        value={first_name}
-                        onChange={e => setFirstName(e.target.value)}
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" placeholder="Введите имя..." value={first_name} onChange={e => setFirstName(e.target.value)}/>
+                    </div>
                     <div><label className="d-block">Введите почту (email)</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Введите почту..."
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        type="email"
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" placeholder="Введите почту..." value={email} onChange={e => setEmail(e.target.value)} type="email"/>
+                    </div>
                     <div><label className="d-block">Введите пароль</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Введите пароль..."
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        type="password"
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" placeholder="Введите пароль..." value={password} onChange={e => setPassword(e.target.value)} 
+                        type="password"/>
+                    </div>
                     <div><label className="d-block">Повторите пароль</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Повторите пароль..."
-                        value={repeat_password}
-                        onChange={e => setRepeatPassword(e.target.value)}
-                        type="password"
-                    /></div>                    
+                        <Form.Control className="mt-3 custom-input" placeholder="Повторите пароль..." value={repeat_password} 
+                        onChange={e => setRepeatPassword(e.target.value)} type="password"/>
+                    </div>                    
                     <div><label className="d-block">Введите номер телефона</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        placeholder="Введите номер телефона..."
-                        value={phone_number}
-                        onChange={e => setPhoneNumber(e.target.value)}
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" placeholder="Введите номер телефона..." value={phone_number} 
+                        onChange={e => setPhoneNumber(e.target.value)}/>
+                    </div>
                     <div><label className="d-block">Введите дату рождения</label>
-                    <Form.Control
-                        className="mt-3 custom-input"
-                        type="date"
-                        value={birthday}
-                        onChange={e => setBirthday(e.target.value)}
-                    /></div>
+                        <Form.Control className="mt-3 custom-input" type="date" value={birthday} onChange={e => setBirthday(e.target.value)} />
+                    </div>
                     <Row className="d-flex justify-content-between mt-3 pl-3 pr-3">
-                    <div className="auth-text">
-                    Есть аккаунт? <NavLink to="/login" className="auth-link">Войдите!</NavLink>
-                    </div>
+                        <div className="auth-text">Есть аккаунт? <NavLink to="/login" className="auth-link">Войдите!</NavLink></div>
                     </Row>
-                    <div className="button-container mt-4">
-                        <Button variant="outline-success" style={{ display: "flex" }} onClick={click}>Зарегистрироваться</Button>
-                    </div>
+                    <div className="button-container mt-4"><Button variant="outline-success" style={{ display: "flex" }} onClick={click}>Зарегистрироваться</Button></div>
                 </Form>
             </Card>
         </Container>
@@ -178,4 +144,3 @@ const AppRegistration = observer(() => {
 });
 
 export default AppRegistration;
-

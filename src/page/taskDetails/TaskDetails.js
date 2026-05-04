@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import backIcon from '../../images/назад.png';
-import { get_info_task_by_id, task_put, dates_tasks_put_for_task, get_repeat_types, repeat_task_put, dates_tasks_get_for_task, 
-        status_put_for_task, get_info_dates_tasks, stage_post, get_stages_by_task_id, task_copy,
-        updateStagesOrder, deleteStage, get_projects, get_profile_matrix_email, get_profile_status_email} from "../../api/commonApi";
+import { get_info_task_by_id, task_put, dates_tasks_put_for_task, get_repeat_types, repeat_task_put, dates_tasks_get_for_task, status_put_for_task, 
+    get_info_dates_tasks, stage_post, get_stages_by_task_id, task_copy, updateStagesOrder, deleteStage, get_projects, get_profile_matrix_email, 
+    get_profile_status_email} from "../../api/commonApi";
 import NavBar from '../../components/NavBar';
 import { Button } from 'react-bootstrap';
 import './TaskDetails.css';
@@ -30,6 +30,7 @@ const AppTaskDetail = () => {
     const [modalType, setModalType] = useState(null); 
     const [formData, setFormData] = useState({});
 
+    //Массив полей задачи с их отображаемыми названиями и ключами для подстановки данных 
     const taskFields = [
         { label: 'Проект:', field: 'project_name' },
         { label: 'Описание:', field: 'description' },
@@ -38,12 +39,13 @@ const AppTaskDetail = () => {
         { label: 'Ячейка матрицы:', field: 'matrix_name' },
         { label: 'Дедлайн:', field: 'deadline' },
         { label: 'Количество помидоров, которое хотите потратить на выполнение задачи:', field: 'pomodoros_planned' },
-        { label: 'Количество помидоров, уже затраченное на задачу:', field: 'pomodoros_spent' },
+        { label: 'Количество помидоров, уже затраченных на задачу:', field: 'pomodoros_spent' },
         { label: 'Дата создания задачи:', field: 'created_at' },
     ];
     if (task.system_code === 'завершение') {
         taskFields.push({label: 'Окончательный дедлайн (дата завершения задачи):', field: 'final_deadline' });
     }
+    //Получение информации о задаче по taskId
     const getTasks = async () => {
         try {
             const tasks = await get_info_task_by_id(taskId, formatDateForSQL(location.state?.returnDate));
@@ -52,8 +54,8 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Получение информации о этапах задачи
     const getStages = async () => {
         try {
             const stages = await get_stages_by_task_id(taskId, formatDateForSQL(location.state?.returnDate));
@@ -63,38 +65,38 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Получение информации о проектах пользователя
     const getProjects = async () => {
         try {
-            const project = await get_projects();
+            const project = await get_projects(id);
             setProjects(project);
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Получение информации о настройках матрицы пользователя
     const getMatrix = async () => {
         try {
-            const matrix = await get_profile_matrix_email();
+            const matrix = await get_profile_matrix_email(id);
             setMatrix(matrix);
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };  
+    }};  
+    //Получение информации о настройках статусов пользователя
     const getYourStatus = async () => {
         try {
-         const yourStatus = await get_profile_status_email();
-         setYourStatus(yourStatus);
-       } catch (e) {
-         console.error('Ошибка при взаимодействии с сервером:', e);
-         const message = e.response?.data?.error || 'Произошла ошибка';
-         setError(message);
-       }
-     };
+            const yourStatus = await get_profile_status_email(id);
+            setYourStatus(yourStatus);
+        } catch (e) {
+            console.error('Ошибка при взаимодействии с сервером:', e);
+            const message = e.response?.data?.error || 'Произошла ошибка';
+            setError(message);
+    }};
+    //Получение информации о типах повторения
     const getRepeatTypes = async () => {
         try {
             const type = await get_repeat_types();
@@ -103,8 +105,8 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };  
+    }}; 
+    //Получение информации о дате выполнения задачи
     const getDatesTasks = async () => {
         try {
             const dates = await get_info_dates_tasks(taskId);
@@ -116,6 +118,7 @@ const AppTaskDetail = () => {
             setError(message);
         }
     };
+    //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций
     useEffect(() => {
         getTasks();
         getProjects();
@@ -125,49 +128,38 @@ const AppTaskDetail = () => {
         getDatesTasks();
         getStages();
     }, []);
+    //Хук useEffect, который вызывается, при изменении значений location.state
     useEffect(() => {
         if (location.state?.returnDate) {
             getTasks();
             getStages();
         }
     }, [location.state]);
+    //Функция вызывается при нажатии кнопки "Назад" и возвращает переданные на страницу значения location.state
     const handleGoBack = () => {
         if (location.state?.returnTo === 'Gantt') {
-            navigate('/statistic', { 
-                state: location.state
-            });
+            navigate('/statistic', {state: location.state});
         } else if (location.state?.returnTo === 'matrix') {
-            navigate('/matrix', { 
-                state: location.state
-            });
+            navigate('/matrix', {state: location.state});
         } else if (location.state?.returnTo === 'ProjectDetails') {
-            navigate(`/project/${id}`, { 
-                state: location.state
-            });
+            navigate(`/project/${id}`, {state: location.state});
         } else if (location.state?.returnTo === 'Project') {
-            navigate(`/project`, { 
-                state: location.state
-            });
+            navigate(`/project`, {state: location.state});
         }
         else if (location.state?.returnTo === 'CompleteTasks') {
-                navigate('/complete', { 
-                    state: location.state
-                });
+            navigate('/complete', {state: location.state});
         }
         else if (location.state?.returnTo === 'AllTasks') {
-            navigate('/all-tasks', { 
-                state: location.state
-            });
+            navigate('/all-tasks', {state: location.state});
         }
         else if (location.state?.returnTo === 'calendar') {
-            navigate('/calendar', { 
-                state: location.state
-            });
+            navigate('/calendar', {state: location.state});
         }
-          else {
+        else {
             navigate(-1);
         }
     };
+    //Функция для подсчета количества часов от начала до окончания времени
     const calculateDuration = (start, end) => {
         if (!start || !end) return null;
         if (start === '00:00:00' && end === '00:00:00') {
@@ -178,18 +170,17 @@ const AppTaskDetail = () => {
         }
         const [startHours, startMinutes] = start.split(':').map(Number);
         const [endHours, endMinutes] = end.split(':').map(Number);
-        
         let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
         if (totalMinutes < 0) {
             totalMinutes += 24 * 60;
         }
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-        
         if (hours === 0) return `${minutes} мин`;
         if (minutes === 0) return `${hours} ч`;
         return `${hours} ч ${minutes} мин`;
     };
+    //Функция для изменения состояния полей формы в модальном окне
     const handleChange = (e, index = null) => {
         const { name, value, type } = e.target;
         if (name === 'repeat_type_id') {
@@ -211,9 +202,7 @@ const AppTaskDetail = () => {
         }
         if (index !== null && Array.isArray(formData)) {
             const updatedArray = [...formData];
-            updatedArray[index] = {
-                ...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
-            };
+            updatedArray[index] = {...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value};
             setFormData(updatedArray);
         }
         else {
@@ -222,16 +211,13 @@ const AppTaskDetail = () => {
             } else {
                 setFormData(prev => ({...prev, [name]: value}));
             }
-        }
-    };
+    }};
+    //Функция открытия модального окна
     const openModal = (userData = null, modalType = null) => {
         if (modalType === 'copy_task') {
             const availableProjects =projects?.filter(p => p.id !== task?.project_id && p.is_active !== false);
             const defaultProject = availableProjects?.[0];
-            
-            setFormData({
-                project_id: defaultProject?.id || ''
-            });
+            setFormData({project_id: defaultProject?.id || ''});
         } 
         else if (modalType === 'status_name') {
             setFormData({system_code: 'default'});
@@ -243,12 +229,14 @@ const AppTaskDetail = () => {
         setShowModal(true);
         setModalType(modalType);
     };
+    //Функция закрытия модального окна
     const closeModal = () => {
         setShowModal(false);
         setModalType(null);
         setFormData({});
         setError('');
     };
+    //Валидация полей задачи и вызов API-функции для изменения данных в таблице tasks (задачи)
     const handleSave = async(isChangeDeadline = null) => {
         try {
             let value;
@@ -281,13 +269,13 @@ const AppTaskDetail = () => {
                 getTasks();
                 if (modalType === 'project_name')
                     navigate('/project')
-                }
+            }
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }
+    }};
+    //Функция для представления даты в формате YYYY-MM-DD
     const formatDateForSQL = (dateValue) => {
         if (!dateValue) return null;
         const date = new Date(dateValue);
@@ -295,9 +283,9 @@ const AppTaskDetail = () => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        
         return `${year}-${month}-${day}`;
     };
+    //Функция для представления времени без секунд
     const formatTimeForSQL = (timeValue) => {
         if (!timeValue) return '00:00:00';
         if (typeof timeValue === 'string' && timeValue.includes(':')) {
@@ -307,6 +295,7 @@ const AppTaskDetail = () => {
         }
         return '00:00:00';
     };
+    //Валидация полей начала и окончания запланированного времени и вызов API-функции для изменения данных в таблице dates_tasks (сроки выполнения задачи)
     const handleSaveDates = async() => {
         try {
             if (!formData.execution_date ||!formData.planned_start_time || !formData.planned_end_time){
@@ -314,12 +303,12 @@ const AppTaskDetail = () => {
                 return;
             }
             const formattedData = {
-                    ...formData,
-                    execution_date: formatDateForSQL(formData.execution_date),
-                    planned_start_time: formatTimeForSQL(formData.planned_start_time),
-                    planned_end_time: formatTimeForSQL(formData.planned_end_time),
-                    actual_start_time: formatTimeForSQL(formData.actual_start_time),
-                    actual_end_time: formatTimeForSQL(formData.actual_end_time)
+                ...formData,
+                execution_date: formatDateForSQL(formData.execution_date),
+                planned_start_time: formatTimeForSQL(formData.planned_start_time),
+                planned_end_time: formatTimeForSQL(formData.planned_end_time),
+                actual_start_time: formatTimeForSQL(formData.actual_start_time),
+                actual_end_time: formatTimeForSQL(formData.actual_end_time)
             };
             const data = await dates_tasks_put_for_task(formattedData);
                 if (data) {
@@ -332,8 +321,8 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }
+    }};
+    //Генерирует массив дат повторения задачи на основе типа повторения, указанных дней/интервала, даты начала и дедлайна
     const generateRepeatDates = (repeatTypeId, numberRepeat, startDate, deadline) => {
         const dates = [];
         let currentDate = new Date(startDate);
@@ -342,52 +331,52 @@ const AppTaskDetail = () => {
         endDate.setHours(23, 59, 59, 999);
         const numbers = numberRepeat.map(n => Number(n));
         switch (repeatTypeId) {
-          case 1:
-            dates.push(new Date(currentDate));
-            break;
-          case 2:
-            while (currentDate <= endDate) {
-              dates.push(new Date(currentDate));
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
-            break;
-          case 3:
-            while (currentDate <= endDate) {
-              const dayOfWeek = currentDate.getDay() === 0 ? 7 : currentDate.getDay(); // Преобразуем воскресенье (0) в 7
-              if (numbers.includes(dayOfWeek)) {
+            case 1:
                 dates.push(new Date(currentDate));
-              }
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
-            break;
-          case 4:
-            while (currentDate <= endDate) {
-              const dayOfMonth = currentDate.getDate();
-              if (numbers.includes(dayOfMonth)) {
-                dates.push(new Date(currentDate));
-              }
-              currentDate.setDate(currentDate.getDate() + 1);
-            }
-            break;
-          case 5:
-            const interval = numbers[0] || 7;
-            while (currentDate <= endDate) {
-              dates.push(new Date(currentDate));
-              currentDate.setDate(currentDate.getDate() + interval);
-            }
-            break;
+                break;
+            case 2:
+                while (currentDate <= endDate) {
+                    dates.push(new Date(currentDate));
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                break;
+            case 3:
+                while (currentDate <= endDate) {
+                    const dayOfWeek = currentDate.getDay() === 0 ? 7 : currentDate.getDay(); // Преобразуем воскресенье (0) в 7
+                    if (numbers.includes(dayOfWeek)) {
+                        dates.push(new Date(currentDate));
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                break;
+            case 4:
+                while (currentDate <= endDate) {
+                    const dayOfMonth = currentDate.getDate();
+                    if (numbers.includes(dayOfMonth)) {
+                        dates.push(new Date(currentDate));
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                break;
+            case 5:
+                const interval = numbers[0] || 7;
+                while (currentDate <= endDate) {
+                    dates.push(new Date(currentDate));
+                    currentDate.setDate(currentDate.getDate() + interval);
+                }
+                break;
             case 6:
-            const repeatMonth = currentDate.getMonth() + 1;
-            const repeatDay = currentDate.getDate();
-            let year = currentDate.getFullYear();
-            while (currentDate <= endDate) {
-              dates.push(new Date(currentDate));
-              year++;
-              currentDate = new Date(year, repeatMonth - 1, repeatDay);
-            }
-            break;
-          default:
-            dates.push(new Date(currentDate));
+                const repeatMonth = currentDate.getMonth() + 1;
+                const repeatDay = currentDate.getDate();
+                let year = currentDate.getFullYear();
+                while (currentDate <= endDate) {
+                    dates.push(new Date(currentDate));
+                    year++;
+                    currentDate = new Date(year, repeatMonth - 1, repeatDay);
+                }
+                break;
+            default:
+                dates.push(new Date(currentDate));
         }
         const uniqueDates = [...new Set(dates.map(d => {
             const date = new Date(d);
@@ -395,49 +384,50 @@ const AppTaskDetail = () => {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
-          }))].sort();
-          
-          return uniqueDates;
-      }
-      const handleSaveDatesAndTask = async () => {
+        }))].sort();
+        return uniqueDates;
+    };
+    //Валидация поля срока выполнения и вызов API-функции для изменения типа повторения и создания сроков выполнения на основе типа повторения,
+    //даты начала и дедлайна
+    const handleSaveDatesAndTask = async () => {
         try {
-          if (formData.system_code === 'завершение') {
-            setError('Задача завершена, изменения данных полей недоступимы');
-            setTimeout(() => {
-                closeModal();
-                setError('');
-            }, 5000);
-            return;
-          }            
-          if (!formData.execution_date) {
-            setError('Все поля должны быть заполнены');
-            return;
-          }
-          if (formData.execution_date > formatDateForSQL(formData.deadline)) {
-            setError('Дата не должна быть позднее дедлайна');
-            return;
-          }          
-          const newDates = generateRepeatDates(Number(formData.repeat_type_id), formData.number_repeat, formData.execution_date, formData.deadline);
-          const updateResult = await repeat_task_put(formData.id, Number(formData.repeat_type_id), formData.number_repeat, formData.execution_date, newDates, formData.planned_start_time, formData.planned_end_time);
-          if (updateResult) {
-            toast.success('Сохранено');
-            getTasks();
-            const dates = await getDatesTasks();
-            closeModal();
-            if (modalType !== 'need_end') {
-                if (newDates.length === 0 || new Date(task.execution_date).toLocaleDateString('ru-RU') !== new Date(newDates[0]).toLocaleDateString('ru-RU')) {
-                    go_to_task(dates[dates.length - 1].execution_date)
-                }
-                return;            
-            }          
-            const data = await dates_tasks_get_for_task(taskId);            
-            if (data && data.length === 1) {
-                alert(`У вас единственный невыполненный срок у задачи - ${formData.execution_date}. Это текущая дата (выбранная). Измените тип повтора для создания еще сроков задач или же Завершите задачу. Если задача еще нужна, но сейчас неактуальна, Вы можете Приостановить задачу, выбрав соответствующий статус на странице с информацией о задаче`)
+            if (formData.system_code === 'завершение') {
+                setError('Задача завершена, изменения данных полей недоступимы');
+                setTimeout(() => {
+                    closeModal();
+                    setError('');
+                }, 5000);
+                return;
+            }            
+            if (!formData.execution_date) {
+                setError('Все поля должны быть заполнены');
                 return;
             }
-            if (data && data.length > 1) {
-                const now = new Date();
-                const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`;
+            if (formData.execution_date > formatDateForSQL(formData.deadline)) {
+                setError('Дата не должна быть позднее дедлайна');
+                return;
+            }          
+            const newDates = generateRepeatDates(Number(formData.repeat_type_id), formData.number_repeat, formData.execution_date, formData.deadline);
+            const updateResult = await repeat_task_put(formData.id, Number(formData.repeat_type_id), formData.number_repeat, formData.execution_date, newDates, formData.planned_start_time, formData.planned_end_time);
+            if (updateResult) {
+                toast.success('Сохранено');
+                getTasks();
+                const dates = await getDatesTasks();
+                closeModal();
+                if (modalType !== 'need_end') {
+                    if (newDates.length === 0 || new Date(task.execution_date).toLocaleDateString('ru-RU') !== new Date(newDates[0]).toLocaleDateString('ru-RU')) {
+                        go_to_task(dates[dates.length - 1].execution_date)
+                    }
+                    return;            
+                }          
+                const data = await dates_tasks_get_for_task(taskId);            
+                if (data && data.length === 1) {
+                    alert(`У вас единственный невыполненный срок у задачи - ${formData.execution_date}. Это текущая дата (выбранная). Измените тип повтора для создания еще сроков задач или же Завершите задачу. Если задача еще нужна, но сейчас неактуальна, Вы можете Приостановить задачу, выбрав соответствующий статус на странице с информацией о задаче`)
+                    return;
+                }
+                if (data && data.length > 1) {
+                    const now = new Date();
+                    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`;
                     let updates = {
                         dates_tasks_id: task.dates_tasks_id,
                         task_id: task.task_id,
@@ -448,8 +438,8 @@ const AppTaskDetail = () => {
                         actual_end_time: task.actual_end_time,
                         code: task.code
                     };
-                        updates.code = 'выполнение';
-                        updates.actual_end_time = currentTime;                  
+                    updates.code = 'выполнение';
+                    updates.actual_end_time = currentTime;                  
                     const data = await dates_tasks_put_for_task(updates);
                     if (data) {
                         toast.success('Статус задачи обновлен');
@@ -458,15 +448,15 @@ const AppTaskDetail = () => {
                         closeModal();                          
                     }
                 }
-          if (new Date(task.execution_date).toLocaleDateString('ru-RU') !== new Date(formData.execution_date).toLocaleDateString('ru-RU'))
-            navigate(`/project/${id}`)                      
-          }
+                if (new Date(task.execution_date).toLocaleDateString('ru-RU') !== new Date(formData.execution_date).toLocaleDateString('ru-RU'))
+                    navigate(`/project/${id}`)                      
+            }
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-      };
+    }};
+    //Вызов API-функции для создания задачи, являющейся полной копией отображаемой задачи, но относящейся к другому проекту
     const Copy = async() => {
         try {
             const data = await task_copy(formData.project_id, taskId);
@@ -478,8 +468,8 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }    
+    }};
+    //Функция для получения текста кнопки в зависимости от статуса выполнения задачи    
     const getButtonText = () => {
         if (task.system_code === 'завершение') {
             return 'Задача завершена, взять ее в работу невозможно';
@@ -492,6 +482,7 @@ const AppTaskDetail = () => {
         }
         return `Приступить к задаче за ${new Date(task.execution_date).toLocaleDateString('ru-RU')}?`;
     };
+    //Функция для изменения статуса выполнения задачи
     const handleTaskStateChange = async () => {
         try {
             const now = new Date();
@@ -523,7 +514,7 @@ const AppTaskDetail = () => {
                             updates.code = 'выполнение'
                             updates.actual_end_time = currentTime;
                         } else 
-                            return
+                            return;
                     } else {                
                         openModal(task, 'need_end');                          
                         return
@@ -556,8 +547,8 @@ const AppTaskDetail = () => {
             console.error('Ошибка при обновлении статуса задачи:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Вызывается при нажатии на кнопку для изменения статуса выполнения задачи
     const handleClick = () => {
         if (task.system_code === 'остановка') {
             if (window.confirm('Задача приостановлена. Сначала поменяйте статус задачи и установите "В работе". Если хотите поменять, нажмите ОК, иначе Отмена')) {
@@ -567,6 +558,7 @@ const AppTaskDetail = () => {
             handleTaskStateChange();
         }
     };
+    //Проверяет, может ли задача быть завершенной
     const complete = () => {
         const allCompleted = stages.every(stage => stage.code === 'выполнение' || stage.code === 'отмена');
         if (!allCompleted) {
@@ -574,13 +566,14 @@ const AppTaskDetail = () => {
             return;
         }
         handlePutStatus('завершение', true)
-    }
+    };
+    //Функция для изменения статуса задачи
     const handlePutStatus = async (changeTo = '', change_dates_tasks = false) => {
         if (formData.system_code === 'default') {
             setError('Поле должно быть заполнено')
             return;            
         }
-        let status = ""
+        let status = "";
         if (task.system_code === 'ожидание')
             status = 'работа'
         else if (task.system_code === 'работа' || task.system_code === 'остановка')
@@ -588,36 +581,34 @@ const AppTaskDetail = () => {
                 status = changeTo
             else 
                 status = formData.system_code
-                if (status === 'завершение') {
-                    const isConfirmed = window.confirm('⚠️ ВНИМАНИЕ!\n\n' + 'Вы собираетесь завершить задачу.\n' +
-                        'После завершения задачу нельзя будет восстановить или изменить.\n\n' +
-                        'Она будет доступна в Навигации в Завершенные задачи, где ее можно восстановить, создав полную копию задачи.\n\n' +
-                        'Вы уверены, что хотите продолжить?');
-                    if (!isConfirmed) {
-                        return;
-                    } 
-                    else if (change_dates_tasks) {
-                        const now = new Date();
-                        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`;
-                        let updates = {
-                            dates_tasks_id: task.dates_tasks_id,
-                            task_id: task.task_id,
-                            execution_date: formatDateForSQL(task.execution_date),
-                            planned_start_time: task.planned_start_time,
-                            planned_end_time: task.planned_end_time,
-                            actual_start_time: task.actual_start_time,
-                            actual_end_time: currentTime,
-                            code: 'выполнение'
-                        };
-                        const data = await dates_tasks_put_for_task(updates);
-                            if (data)
-                                getDatesTasks();
-                            else {
-                                setError('Ошибка изменения срока выполнения задачи')
-                                return;
-                            }
-                    }
+        if (status === 'завершение') {
+            const isConfirmed = window.confirm('⚠️ ВНИМАНИЕ!\n\n' + 'Вы собираетесь завершить задачу.\n' +
+                'После завершения задачу нельзя будет восстановить или изменить.\n\n' +
+                'Она будет доступна в Навигации в Завершенные задачи, где ее можно восстановить, создав полную копию задачи.\n\n' +
+                'Вы уверены, что хотите продолжить?');
+            if (!isConfirmed) return;
+            else if (change_dates_tasks) {
+                const now = new Date();
+                const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`;
+                let updates = {
+                    dates_tasks_id: task.dates_tasks_id,
+                    task_id: task.task_id,
+                    execution_date: formatDateForSQL(task.execution_date),
+                    planned_start_time: task.planned_start_time,
+                    planned_end_time: task.planned_end_time,
+                    actual_start_time: task.actual_start_time,
+                    actual_end_time: currentTime,
+                    code: 'выполнение'
+                };
+                const data = await dates_tasks_put_for_task(updates);
+                if (data)
+                    getDatesTasks();
+                else {
+                    setError('Ошибка изменения срока выполнения задачи')
+                    return;
                 }
+            }
+        }
         const data = await status_put_for_task(taskId, status);
             if (data) {
                 toast.success('Статус задачи обновлен');
@@ -625,13 +616,16 @@ const AppTaskDetail = () => {
                 closeModal();
             }
     };
+    //Функция для отображения выбранного в таблице срока выполнения задачи
     const go_to_task = (selectedDate) => {
         closeModal();
         navigate(`/project/${id}/task/${taskId}`, {replace: true, state: {returnTo: 'ProjectDetails', returnDate: formatDateForSQL(selectedDate), returnIsNeedAllTasks: false}})
     };
+    //Выполняет навигацию на страницу Pomodoro
     const handleClickPomodoro = () => {
         navigate(`/pomodoro`, {replace: true, state: {selectedTask: taskId}})
     };
+    //Валидация полей этапа и вызов API-функции для добавления данных в таблицу stages (этапы)
     const handleCreate = async() => {
         try {
             if (!formData.stage_name || !formData.description) {
@@ -648,23 +642,24 @@ const AppTaskDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }
+    }};
+    //Выполняет навигацию на страницу этапа
     const handleStageClick = (stageId) => {
         navigate(`/project/${id}/task/${taskId}/stage/${stageId}`, {state: {returnTo: 'TaskDetails', returnDate: task.execution_date}})
     };
+    //Вызов API-функции для для изменения порядка этапа в списке
     const handleReorder = async (reorderedStages) => {
         try {
-          const data = await updateStagesOrder(reorderedStages);
-          if (data) {
-             getStages();
-          }
+            const data = await updateStagesOrder(reorderedStages);
+            if (data) {
+                getStages();
+            }
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-      };
+    }};
+    //Вызов API-функции для для удаления этапа 
     const handleDeleteStage = async(stageId) => {
         try {
             const data = await deleteStage(stageId);
@@ -672,12 +667,31 @@ const AppTaskDetail = () => {
                 toast.success('Этап удален');
                getStages();
             }
-          } catch (e) {
-              console.error('Ошибка при взаимодействии с сервером:', e);
-              const message = e.response?.data?.error || 'Произошла ошибка';
-              setError(message);
-          }
-      };
+        } catch (e) {
+            console.error('Ошибка при взаимодействии с сервером:', e);
+            const message = e.response?.data?.error || 'Произошла ошибка';
+            setError(message);
+    }};
+    // Фильтрация доступных статусов задачи в зависимости от системного кода статуса
+    const getAvailableStatuses = () => {
+        if (!yourStatus || !Array.isArray(yourStatus)) return [];
+        return yourStatus.filter(status => {
+            if (task.system_code === 'ожидание') {
+                return status.system_code === 'работа';
+            }
+            return status.system_code !== task.system_code && status.system_code !== 'ожидание';
+        });
+    };
+    // Обработчик клика по полю задачи: проверяет возможность редактирования и открывает модальное окно или показывает предупреждение
+    const handleFieldClick = (item) => {
+        if (item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent') {
+            return;
+        }
+        if ((item.field === "project_name" && projects.length > 1) || (item.field === "description") || item.field === "matrix_name" || item.field === "deadline" || (item.field === "status_name" && task.system_code !== 'завершение') || item.field === "pomodoros_planned") {
+            openModal(task, item.field);
+        } else if (task.system_code === 'завершение')
+            alert('Задача завершена, поменять статус вы не можете. Если хотите, вы можете скопировать задачу (создать полную копию этой задачи) на этой странице или же восстановить задачу в Навигации в разделе Завершенные задачи (также создать полную копию)')
+    }
     return (
         <div className="project-wrapper">
             <NavBar />
@@ -701,10 +715,7 @@ const AppTaskDetail = () => {
                         fields={['execution_date', 'number_repeat']} users = {type}/>)}
             {modalType === 'status_name' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Выберите, какой статус установить задаче'}
                         formData={formData} onChange={handleChange} onSave={() => handlePutStatus()} error={error} isNew={false}
-                        fields={['status_select']} users={yourStatus?.filter(status => {
-                                                    if (task.system_code === 'ожидание')
-                                                        return status.system_code === 'работа';
-                                                    return status.system_code !== task.system_code && status.system_code !== 'ожидание';})}/>)}            
+                        fields={['status_select']} users={getAvailableStatuses()}/>)}            
             {modalType === 'matrix_name' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'К какой части матрицы Эйзенхауэра будет относиться задача'}
                         formData={formData} onChange={handleChange} onSave={handleSave} error={error} isNew={false}
                         fields={['matrix_select']} users={matrix}/>)} 
@@ -719,113 +730,113 @@ const AppTaskDetail = () => {
                         fields={['need_end', 'execution_date', 'number_repeat']} users = {type} extraData={complete}/>)}   
             {modalType === 'info_dates_tasks' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Информация о датах выполнения задачи'}
                         fields={['info_dates_tasks']} users = {dates_tasks} extraData={{button: 'OK', titleColums: ['Дата выполнения', 'Запланированное время', 'Фактическое время', 'Статус', 'Действие'],
-                                                                        valueColums: ['execution_date', 'plan', 'fact', 'status', 'action'], go_to_task: go_to_task, selectDate: task.execution_date}}/>)}                                                    
+                        valueColums: ['execution_date', 'plan', 'fact', 'status', 'action'], go_to_task: go_to_task, selectDate: task.execution_date}}/>)}                                                    
             {modalType==='stage_modal' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Создание этапа'}
                         formData={formData} onChange={handleChange} onSave={handleCreate} error={error} isNew={true}
                         fields={['stage_name', 'description']}/>)}
             <div className="project-layout">
-            <Navigate/>
-            <div className="projectHistory-content">
-            <div className="back-button-container">
-                <button onClick={handleGoBack} className="back-button">
-                <img src={backIcon} className="back-icon"/>Назад</button>
-            </div>
-            <div className="profile-header">
-                <div className="clickable-title" onClick={() => openModal(task, 'task_name')}>
-                    <h1 className="h1-prof">Задача: {task.task_name}</h1>
-                    <div className="edit-hint">
-                        <span className="edit-icon">✎</span>
-                        <span>кликните для редактирования</span>
+                <Navigate/>
+                <div className="projectHistory-content">
+                    {/*Кнопка Назад*/}
+                    <div className="back-button-container">
+                        <button onClick={handleGoBack} className="back-button">
+                        <img src={backIcon} className="back-icon"/>Назад</button>
                     </div>
-                </div>
-            </div>
-            {task.system_code !== 'ожидание' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClick}>{getButtonText()}</Button>)}
-            {task.system_code === 'ожидание' && (<Button variant='primary' style={{height: '60px'}} onClick={handlePutStatus}>Взять задачу в работу?</Button>)}
-            {task.system_code === 'работа' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClickPomodoro}>Начать помидор</Button>)}
-            {error && <div className="error-message">{error}</div>}
-            {projects.length > 1 && task.system_code !== 'завершение' && (<div className="section-select">
-                    <div className="display-tasks">
-                        <h2 className="h1-prof">Вы можете скопировать задачу в другой проект, будет создана полная копия вашей задачи, но относиться она будет к другому проекту. Скопировать?</h2>
-                    </div>
-                <Button variant="primary" onClick={() => openModal([], 'copy_task')}>Скопировать</Button>
-            </div>)}
-            
-            {taskFields.map((item, index) => (<>
-                {item.field === 'execution_date' ? (
-                    <div className="section-select">
-                        <div className="display-tasks" >
-                            <h2 className="h1-prof">{item.label}</h2>
-                            <div className="message-block-time">
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, item.field);}}>
-                                <span className="message-text">{new Date(task.execution_date).toLocaleDateString('ru-RU')}</span>
-                                </div>
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, item.field);}}>
-                                    <div className="display-tasks">
-                                        <span className="message-text">Тип повторения:</span>
-                                        <span className="message-text">{type.find(t => t.id === task.repeat_type_id)?.type_name}</span>
-                                        {task.number_repeat && task.number_repeat.length > 0 && (
-                                            <span className="message-text">
-                                                {task.repeat_type_id === 5 ? `(каждые ${task.number_repeat[0]} дн.)` : ''}
-                                                {task.repeat_type_id === 4 ? `(числа: ${task.number_repeat.join(', ')})` : ''}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>     
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, 'plan_time');}}>
-                                    <div className="display-tasks">
-                                        <span className="message-text">Запланированное время:</span>
-                                        <span className="message-text">{task.planned_start_time?.substring(0, 5)} - {task.planned_end_time?.substring(0, 5)}</span>
-                                        <span className="message-text">({calculateDuration(task.planned_start_time, task.planned_end_time)})</span>
-                                    </div>
-                                </div>
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" >    
-                                    <div className="display-tasks">
-                                        <span className="message-text">Фактическое время:</span>
-                                        <span className="message-text">{task.actual_start_time?.substring(0, 5)} - {task.actual_end_time?.substring(0, 5)}</span>
-                                        <span className="message-text">({calculateDuration(task.actual_start_time, task.actual_end_time)})</span>
-                                    </div>
-                                </div> 
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" >    
-                                    <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_tasks')}>Посмотреть информацию о всех датах выполнения задачи</Button>
-                                </div>                                                          
+                    {/*Заголовок страницы*/}
+                    <div className="profile-header">
+                        <div className="clickable-title" onClick={() => openModal(task, 'task_name')}>
+                            <h1 className="h1-prof">Задача: {task.task_name}</h1>
+                            <div className="edit-hint">
+                                <span className="edit-icon">✎</span>
+                                <span>кликните для редактирования</span>
                             </div>
                         </div>
                     </div>
-                ) : (
-                <div key={index} className="section-select">
-                    <div className="display-tasks">
-                        <h2 className="h1-prof">{item.label}</h2>
-                        <div className={`mt-3 mb-3 p-4 modal-input ${item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' ? '' : 'message-block'}`} onClick={() => {
-                                    if (item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent') {
-                                        return;
-                                    }
-                                    if ((item.field === "project_name" && projects.length > 1) || (item.field === "description") || item.field === "matrix_name" || item.field === "deadline" || (item.field === "status_name" && task.system_code !== 'завершение') || item.field === "pomodoros_planned") {
-                                        openModal(task, item.field);
-                                    } else if (task.system_code === 'завершение')
-                                        alert('Задача завершена, поменять статус вы не можете. Если хотите, вы можете скопировать задачу (создать полную копию этой задачи) на этой странице или же восстановить задачу в Навигации в разделе Завершенные задачи (также создать полную копию)')
-                                }}>
-                            <p className="message-text">{item.field === 'pomodoros_planned' && task[item.field] === -1 
-                                ? 'Введите количество' : (item.field.includes('date') || item.field.includes('_at') || item.field.includes('deadline') 
-                                ? new Date(task[item.field]).toLocaleDateString('ru-RU') : task[item.field])}
-                            </p>
+                    {/*Кнопки для изменения статуса выполнения и перехода на страницу Pomodoro*/}
+                    {task.system_code !== 'ожидание' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClick}>{getButtonText()}</Button>)}
+                    {task.system_code === 'ожидание' && (<Button variant='primary' style={{height: '60px'}} onClick={handlePutStatus}>Взять задачу в работу?</Button>)}
+                    {task.system_code === 'работа' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClickPomodoro}>Начать помидор</Button>)}
+                    {error && <div className="error-message">{error}</div>}
+                    {/*Кнопки для копирования задачи в другой проект*/}
+                    {projects.length > 1 && task.system_code !== 'завершение' && (<div className="section-select">
+                        <div className="display-tasks">
+                            <h2 className="h1-prof">Вы можете скопировать задачу в другой проект, будет создана полная копия вашей задачи, но относиться она будет к другому проекту. Скопировать?</h2>
                         </div>
+                        <Button variant="primary" onClick={() => openModal([], 'copy_task')}>Скопировать</Button>
+                    </div>)}
+                    {taskFields.map((item, index) => (<>
+                        {/*Отображение поля дата и время выполнения*/}
+                        {item.field === 'execution_date' ? (
+                            <div className="section-select">
+                                <div className="display-tasks" >
+                                    <h2 className="h1-prof">{item.label}</h2>
+                                    <div className="message-block-time">
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, item.field);}}>
+                                            <span className="message-text">{new Date(task.execution_date).toLocaleDateString('ru-RU')}</span>
+                                        </div>
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, item.field);}}>
+                                            <div className="display-tasks">
+                                                <span className="message-text">Тип повторения:</span>
+                                                <span className="message-text">{type.find(t => t.id === task.repeat_type_id)?.type_name}</span>
+                                                {task.number_repeat && task.number_repeat.length > 0 && (
+                                                    <span className="message-text">
+                                                        {task.repeat_type_id === 5 ? `(каждые ${task.number_repeat[0]} дн.)` : ''}
+                                                        {task.repeat_type_id === 4 ? `(числа: ${task.number_repeat.join(', ')})` : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>     
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(task, 'plan_time');}}>
+                                            <div className="display-tasks">
+                                                <span className="message-text">Запланированное время:</span>
+                                                <span className="message-text">{task.planned_start_time?.substring(0, 5)} - {task.planned_end_time?.substring(0, 5)}</span>
+                                                <span className="message-text">({calculateDuration(task.planned_start_time, task.planned_end_time)})</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" >    
+                                            <div className="display-tasks">
+                                                <span className="message-text">Фактическое время:</span>
+                                                <span className="message-text">{task.actual_start_time?.substring(0, 5)} - {task.actual_end_time?.substring(0, 5)}</span>
+                                                <span className="message-text">({calculateDuration(task.actual_start_time, task.actual_end_time)})</span>
+                                            </div>
+                                        </div> 
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" >    
+                                            <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_tasks')}>Посмотреть информацию о всех датах выполнения задачи</Button>
+                                        </div>                                                          
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            //Отображение остальных полей
+                            <div key={index} className="section-select">
+                                <div className="display-tasks">
+                                    <h2 className="h1-prof">{item.label}</h2>
+                                    <div className={`mt-3 mb-3 p-4 modal-input ${item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' ? '' : 'message-block'}`} 
+                                        onClick={() => {handleFieldClick(item)}}>
+                                        <p className="message-text">{item.field === 'pomodoros_planned' && task[item.field] === -1 
+                                            ? 'Введите количество' : (item.field.includes('date') || item.field.includes('_at') || item.field.includes('deadline') 
+                                            ? new Date(task[item.field]).toLocaleDateString('ru-RU') : task[item.field])}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                    )}</>))}
+                    {/*Кнопка для добавления этапа*/}
+                    {task.system_code !== 'завершение' && (<div className="text-end mb-3">
+                        <Button variant="primary" style={{height: '60px'}} onClick={() => openModal(null, 'stage_modal')}>Добавить этап</Button>
+                    </div>)}
+                    {/*Отображение списка этапов с помощью компонента StagesList*/}
+                    <div>
+                        {stages.length > 0 ? (
+                            <StagesList stages={stages} onReorder={handleReorder} onDelete={handleDeleteStage} onStage={handleStageClick} />
+                        ) : (
+                            <div className="project-card" style={{ textAlign: 'center', color: 'red' }}>
+                                У вас нет этапов. Для создания нажмите на кнопку добавить этап
+                            </div>
+                        )}
                     </div>
                 </div>
-            )}</>))}
-            {task.system_code !== 'завершение' && (<div className="text-end mb-3">
-                <Button variant="primary" style={{height: '60px'}} onClick={() => openModal(null, 'stage_modal')}>Добавить этап</Button>
-            </div>)}
-            <div>
-                {stages.length > 0 ? (
-                    <StagesList stages={stages} onReorder={handleReorder} onDelete={handleDeleteStage} onStage={handleStageClick} />
-                ) : (
-                    <div className="project-card" style={{ textAlign: 'center', color: 'red' }}>
-                        У вас нет этапов. Для создания нажмите на кнопку добавить этап
-                    </div>
-                )}
             </div>
-        </div>
-        </div>
         </div>
     );
 };

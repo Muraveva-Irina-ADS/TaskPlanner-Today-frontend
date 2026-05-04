@@ -136,7 +136,11 @@ body {
     text-decoration: underline;
 }
 
-
+.small-font {
+    margin-top: 15px;
+    font-size: 0.9em !important;
+    opacity: 0.9;
+}
 
 
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
-import {get_tasks, get_dates_stages_history, get_export_date_from_dates_tasks_history, get_profile_settings_email} from "../../api/commonApi";
+import {get_tasks, get_dates_tasks_history, get_export_date_from_dates_tasks_history, get_profile_settings_email} from "../../api/commonApi";
 import { observer } from "mobx-react-lite";
 import backIcon from '../../images/назад.png';
 import { Context } from '../../index';
@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import ModalStr from '../../components/ModalStructure';
 import HelpTip from '../../components/HelpTip';
 import toast from 'react-hot-toast';
+import Navigate from '../../components/Navigate';
 
 const AppCalendar = observer(() => {
     const { user } = useContext(Context);
@@ -33,7 +34,7 @@ const AppCalendar = observer(() => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [selectedStatus, setSelectedStatus] = useState(null);
 
-    // Восстанавление состояний при возврате
+    //Хук useEffect, который вызывается, при изменении значений location.state
     useEffect(() => {
         if (location.state?.returnDate) {
             setCurrentDate(new Date(location.state.returnDate));
@@ -43,15 +44,14 @@ const AppCalendar = observer(() => {
             setSelectedStatus(location.state.selectedStatus || '');
         }
     }, [location.state]);
-
-    // Обновление поля ввода при изменении даты
+    //Хук useEffect, который вызывается для обновления поля ввода при изменении даты
     useEffect(() => {
         const year = currentDate.getFullYear();
         const month = String(currentDate.getMonth() + 1).padStart(2, '0');
         const day = String(currentDate.getDate()).padStart(2, '0');
         setDateInput(`${year}-${month}-${day}`);
     }, [currentDate]);
-
+    //Получение информации о задачах
     const getTasks = async () => {
         try {
             const tasksData = await get_tasks();
@@ -60,18 +60,18 @@ const AppCalendar = observer(() => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Получение информации о настройках пользователя
     const getYourSettings = async () => {
         try {
-         const yourSettings = await get_profile_settings_email();
-         setYourSettings(yourSettings);
-       } catch (e) {
-         console.error('Ошибка при взаимодействии с сервером:', e);
-         const message = e.response?.data?.error || 'Произошла ошибка';
-         setError(message);
-       }
-     };
+            const yourSettings = await get_profile_settings_email();
+            setYourSettings(yourSettings);
+        } catch (e) {
+            console.error('Ошибка при взаимодействии с сервером:', e);
+            const message = e.response?.data?.error || 'Произошла ошибка';
+            setError(message);
+    }};
+    //Получение информации о задачах из исторической таблицы
     const getDatesStagesHistory = async () => {
         try {
             if (!formData.archiveStartDate || !formData.archiveEndDate) {
@@ -92,7 +92,7 @@ const AppCalendar = observer(() => {
                 setError(`Введенная дата должна быть раньше даты последней выгрузки (${exportDate.toLocaleDateString('ru-RU')})`);
                 return;
             }
-            const historyDates = await get_dates_stages_history(formData.archiveStartDate, formData.archiveEndDate);
+            const historyDates = await get_dates_tasks_history(formData.archiveStartDate, formData.archiveEndDate);
             setDatesStagesHistory(historyDates);
             setTasks(prevTasks => [...historyDates, ...prevTasks]);
             if (historyDates) {
@@ -107,6 +107,7 @@ const AppCalendar = observer(() => {
             setError(message);
         }
     };
+    //Получение информации о дате последней выгрузки данных из таблицы dates_tasks_history
     const get_exportDateTasks = async () => {
         try {
             let data;
@@ -121,21 +122,19 @@ const AppCalendar = observer(() => {
                     setError('Данные в исторической таблице сроков задач не найдены');
                 setLastExportDate('1970-01-01');
             }
-          } catch (e) {
+        } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setLastExportDate('1970-01-01');
             setError(message);
-          }
-    }; 
+    }};
+    //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций 
     useEffect(() => {
         getTasks();
         get_exportDateTasks();
         getYourSettings();
     }, []);
-
-    const handleDateInputChange = (e) => {setDateInput(e.target.value);};
-
+    //Функция для представления даты в формате YYYY-MM-DD
     const formatDateForComparison = (date) => {
         if (!date) return '';
         if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -147,11 +146,10 @@ const AppCalendar = observer(() => {
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
-
+    //Возвращает массив дат в зависимости от выбора дня, недели или месяца
     const getDays = () => {
         const days = [];
         const today = new Date(currentDate);
-        
         switch(view) {
             case 'day':
                 days.push(new Date(today));
@@ -189,8 +187,7 @@ const AppCalendar = observer(() => {
         }
         return days;
     };
-
-    // Получение задач для конкретной даты
+    //Получение задач для конкретной даты
     const getTasksForDate = (date) => {
         if (!tasks || tasks.length === 0) return [];
         const tasksForDate = tasks.filter(task => {
@@ -200,12 +197,10 @@ const AppCalendar = observer(() => {
         });
         return tasksForDate;
     };
-
-    // Группировка задач
+    //Группировка задач
     const groupTasks = (tasksForDate) => {
         if (groupBy === 'none') return { 'Задачи': tasksForDate };
         if (!tasksForDate.length) return {};
-        
         const grouped = {};
         tasksForDate.forEach(task => {
             let groupKey;
@@ -227,14 +222,11 @@ const AppCalendar = observer(() => {
             }
             grouped[groupKey].push(task);
         });
-        
         return grouped;
     };
-
-    // Навигация по датам
+    //Переход к следующей дате в зависимости от выбора дня, недели или месяца
     const navigateDate = (direction) => {
         const newDate = new Date(currentDate);
-        
         switch(view) {
             case 'day':
                 newDate.setDate(currentDate.getDate() + direction);
@@ -246,13 +238,12 @@ const AppCalendar = observer(() => {
                 newDate.setMonth(currentDate.getMonth() + direction);
                 break;
         }
-        
         setCurrentDate(newDate);
     };
+    //Возвращает true, если введенная дата корректна и данные о задачах за эту дату не выгружены или получены для просмотра
     const isDateValid = (dateToCheck) => {
         const exportDate = new Date(lastExportDate);
         exportDate.setHours(0, 0, 0, 0);
-        
         const checkDate = new Date(dateToCheck);
         checkDate.setHours(0, 0, 0, 0);
         if (archiveRange.length > 0) {
@@ -283,6 +274,7 @@ const AppCalendar = observer(() => {
                 return checkDate >= exportDate;
         }
     };
+    //Вызывается при нажатии на кнопку "Перейти" для отображения списка задач для введенной даты
     const goToDate = () => {
         const date = new Date(dateInput);
         if (!isNaN(date.getTime())) {
@@ -297,6 +289,7 @@ const AppCalendar = observer(() => {
             }
         }
     };
+    //Переход к предыдущей дате в зависимости от выбора дня, недели или месяца
     const goToDateBack = () => {
         const newDate = new Date(currentDate);
         switch(view) {
@@ -321,30 +314,32 @@ const AppCalendar = observer(() => {
             setCurrentDate(newDate);
         }
     };
+    //Возвращает название дня недели в зависимости от даты
     const getWeekdayName = (date) => {
         if (!date) return '';
         const dayIndex = date.getDay();
         const adjustedIndex = dayIndex === 0 ? 6 : dayIndex - 1;
         return weekdays[adjustedIndex];
     };
+    //Функция открытия модального окна
     const openModal = () => {
         setFormData([]);      
         setShowModal(true);
         setError('');
     };
-    
+    //Функция закрытия модального окна
     const closeModal = () => {
         setShowModal(false);
         setError('');
     };
+    //Функция для изменения состояния полей формы в модальном окне
     const handleChange = (e) => {
         const { name, value, type } = e.target;
         setFormData(prev => ({...prev, [name]: value}));
     };
-    // Форматирование заголовка
+    //Форматирование заголовка даты
     const getHeaderText = () => {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        
         switch(view) {
             case 'day':
                 return currentDate.toLocaleDateString('ru-RU', options);
@@ -353,17 +348,15 @@ const AppCalendar = observer(() => {
                 startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
                 const endOfWeek = new Date(startOfWeek);
                 endOfWeek.setDate(startOfWeek.getDate() + 6);
-                
                 return `${startOfWeek.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} - ${endOfWeek.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`;
             }
             case 'month':
                 return currentDate.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
         }
     };
-    
     const days = getDays();
     const today = new Date();
-
+    //Вызывает функцию navigate для перехода на страницу задачи
     const handleTaskClick = (task, date) => {
         if (lastExportDate && new Date(lastExportDate) >= new Date(task.execution_date)) {
             alert('Нельзя перейти к задаче, так как данные за эту дату были выгружены');
@@ -373,165 +366,174 @@ const AppCalendar = observer(() => {
             state: { returnTo: 'calendar', returnDate: date, returnView: view, returnGroupBy: groupBy, returnIsNeedAllTasks: false, selectedProject: selectedProject, selectedStatus: selectedStatus}
         });
     }
+    //Фильтрует список задач по выбранным проекту и/млм статусу, затем возвращает массив задач для отображения
+    const getFilteredTasks = (tasks) => {
+        if (!tasks || !Array.isArray(tasks)) return [];
+        let filtered = tasks;
+        if (selectedProject) {
+            filtered = filtered.filter(task => Number(task.project_id) === Number(selectedProject));
+        }
+        if (selectedStatus) {
+            filtered = filtered.filter(task => Number(task.status_id) === Number(selectedStatus));
+        }
+        return filtered;
+    };
     return (
-        <div className="calendar-wrapper">
+        <div className="project-wrapper">
             <NavBar />
-            <div className="back-button-container">
-                <button onClick={() => navigate(-1)} className="back-button">
-                <img src={backIcon} className="back-icon"/>Назад</button>
-            </div>
-            <ModalStr show={showModal} onHide={closeModal} modalType={'history_dates_tasks'} title={'Получение архивных данных'}
+            <div className="project-layout">
+                <Navigate/>
+                <div className="calendar-wrapper">
+                    {/*Кнопка Назад*/}
+                    <div className="back-button-container">
+                        <button onClick={() => navigate(-1)} className="back-button">
+                        <img src={backIcon} className="back-icon"/>Назад</button>
+                    </div>
+                    <ModalStr show={showModal} onHide={closeModal} modalType={'history_dates_tasks'} title={'Получение архивных данных'}
                         formData={formData} onChange={handleChange} onSave={getDatesStagesHistory} error={error} isNew={true}
                         fields={['archiveStartDate', 'archiveEndDate']}/>
-            <div className="calendar-header">
-                <div className="calendar-nav">
-                    <Button variant="outline-primary" onClick={() => goToDateBack()}>←</Button>
-                    <h2 className="calendar-title">{getHeaderText()}</h2>
-                    <Button variant="outline-primary" onClick={() => navigateDate(1)}>→</Button>
-                </div>
-                <div className="calendar-date-picker">
-                    <InputGroup style={{ width: '250px' }}>
-                        <Form.Control type="date" value={dateInput} onChange={handleDateInputChange}/>
-                        <Button variant="primary" onClick={goToDate}>Перейти</Button>
-                    </InputGroup>
-                </div>
-                {dates_stages_history.length > 0 && (
-                    <Button variant="primary" onClick={() => openModal()}>Получить еще архивные данные</Button>
-                )}
-                
-                <div className="calendar-view-selector">
-                    <Form.Select value={view} onChange={(e) => setView(e.target.value)}>
-                        <option value="day">День</option>
-                        <option value="week">Неделя</option>
-                        <option value="month">Месяц</option>
-                    </Form.Select>
-                    
-                    <Form.Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
-                        <option value="none">Без группировки</option>
-                        <option value="project">По проектам</option>
-                        <option value="status">По статусам</option>
-                        <option value="matrix">По матрице</option>
-                    </Form.Select>
-                    <Form.Select value={selectedProject || ''} onChange={(e) => setSelectedProject(e.target.value || null)}>
-                        <option value="">Все проекты</option>
-                        {tasks && tasks.length > 0 && Array.from(new Map(tasks
-                            .filter(task => task.project_id && task.project_name)
-                            .map(task => [task.project_id, {id: task.project_id, name: task.project_name}])
-                            ).values())
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(project => (
-                                <option key={project.id} value={project.id}>{project.name}</option>
-                            ))}
-                    </Form.Select>
-                    <Form.Select value={selectedStatus || ''} onChange={(e) => setSelectedStatus(e.target.value || null)}>
-                        <option value="">Все статусы</option>
-                        {tasks && tasks.length > 0 && Array.from(new Map(tasks
-                            .filter(task => task.status_id && task.status_name)
-                            .map(task => [task.status_id, {id: task.status_id, name: task.status_name}])
-                            ).values())
-                            .sort((a, b) => a.name.localeCompare(b.name))
-                            .map(status => (
-                                <option key={status.id} value={status.id}>{status.name}</option>))}
-                    </Form.Select>
-                </div>
-
-            </div>
-            
-            <div className={`calendar-grid calendar-${view}`}>
-                {(view === 'week' || view === 'month') && (
-                    <div className="calendar-weekdays">
-                        {weekdays.map((day, index) => (<div key={index} className="weekday">{day}</div>))}
-                    </div>
-                )}
-                {view === 'day' && (
-                    <div className="calendar-weekdays">
-                        <div className="weekday">{getWeekdayName(currentDate)}</div>
-                    </div>
-                )}
-                
-                <div className={`calendar-days ${view}`}>
-                    {days.map((date, index) => {
-                        const isToday = formatDateForComparison(date) === formatDateForComparison(today);
-                        const isCurrentMonth = view === 'month' && date.getMonth() === currentDate.getMonth();
-                        const tasksForDate = getTasksForDate(date);
-                        const groupedTasks = groupTasks(tasksForDate);
-                        
-                        return (
-                            <div key={index} 
-                                className={`calendar-day ${isToday ? 'today' : ''} ${!isCurrentMonth && view === 'month' ? 'other-month' : ''}`}
-                            >
-                                <div className="day-header" style={{ position: 'relative' }}>
-                                {view === 'day' && (<HelpTip>
-                                    количество задач на этот день / лимит задач из настроек профиля
-                                </HelpTip>)}
-                                    <span className="day-number" title="Число">{date.getDate()}</span>
-                                    {tasksForDate.length >= 0 && yourSettings && (
-                                        <span 
-                                        className={`tasks-count ${
-                                            tasksForDate.length < yourSettings.limit_tasks ? 'normal' :
-                                            tasksForDate.length === yourSettings.limit_tasks ? 'warning' : 'danger'
-                                        }`}
-                                        title={`${tasksForDate.length} из ${yourSettings.limit_tasks} задач`}
-                                    >
-                                        {tasksForDate.length}/{yourSettings.limit_tasks}
-                                    </span>)}
-                                </div>
-                                
-                                <div className="tasks-list">
-                                    {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
-                                        <div key={groupName} className="task-group">
-                                            {groupBy !== 'none' && (
-                                                <div className="task-group-header">
-                                                    <span className="task-group-name">{groupName}</span>
-                                                    <span className="task-group-count">{groupTasks.length}</span>
-                                                </div>
-                                            )}
-                                            {groupTasks
-                                            .filter(task => !selectedProject || Number(task.project_id) === Number(selectedProject))
-                                            .filter(task => !selectedStatus || Number(task.status_id) === Number(selectedStatus))
-                                            .map(task => {
-                                            return (
-                                                <div key={task.id || Math.random()} 
-                                                    className="calendar-task"
-                                                    style={{ 
-                                                        borderLeft: `5px solid ${task.project_color || '#ccc'}`,
-                                                        background: task.system_code === 'завершение' ? '#c8f0c9' : '#f8f9fa'
-                                                    }}
-                                                    onClick={() => handleTaskClick(task, date)}
-                                                    title={task.system_code === 'завершение' ? 'Задача завершена' : ''}
-                                                >
-                                                    <div className="task-indicators">
-                                                        {task.matrix_color && (
-                                                            <span className="task-matrix-indicator" 
-                                                                style={{ backgroundColor: task.matrix_color || 'red' }}
-                                                                title={task.matrix_name || 'Матрица'}
-                                                            ></span>
-                                                        )}
-                                                        <span className={`task-status-badge`} style={{backgroundColor: task.exec_color}} title = "Статус выполнения">{task.exec_status_name}</span>
-                                                    </div>
-                                                    
-                                                    <span className="task-name-tag" title="Название задачи">{task.task_name}</span>
-                                                    {task.project_name && groupBy !== 'project' && (
-                                                        <span className="task-project-tag" style={{ color: task.project_color }}
-                                                        title="Название проекта">{task.project_name}</span>
-                                                    )}
-                                                    {task.status_name && groupBy !== 'status' && (
-                                                        <span className="task-project-tag" title="Статус задачи">{task.status_name}</span>
-                                                    )}                                                 
-                                                </div>
-                                            )})}
-                                        </div>
+                    <div className="calendar-header">
+                        {/*Дата и стрелки для перехода на следующую или предыдущую дату соответственно*/}
+                        <div className="calendar-nav">
+                            <Button variant="outline-primary" onClick={() => goToDateBack()}>←</Button>
+                            <h2 className="calendar-title">{getHeaderText()}</h2>
+                            <Button variant="outline-primary" onClick={() => navigateDate(1)}>→</Button>
+                        </div>
+                        {/*Поле для ввода даты и кнопка "Перейти"*/}
+                        <div className="calendar-date-picker">
+                            <InputGroup style={{ width: '250px' }}>
+                                <Form.Control type="date" value={dateInput} onChange={(e) => setDateInput(e.target.value)}/>
+                                <Button variant="primary" onClick={goToDate}>Перейти</Button>
+                            </InputGroup>
+                        </div>
+                        {dates_stages_history.length > 0 && (
+                            <Button variant="primary" onClick={() => openModal()}>Получить еще архивные данные</Button>
+                        )}
+                        {/*Блок с select для фильтрации и группировки списков задач*/}
+                        <div className="calendar-view-selector">
+                            <Form.Select value={view} onChange={(e) => setView(e.target.value)}>
+                                <option value="day">День</option>
+                                <option value="week">Неделя</option>
+                                <option value="month">Месяц</option>
+                            </Form.Select>
+                            
+                            <Form.Select value={groupBy} onChange={(e) => setGroupBy(e.target.value)}>
+                                <option value="none">Без группировки</option>
+                                <option value="project">По проектам</option>
+                                <option value="status">По статусам</option>
+                                <option value="matrix">По матрице</option>
+                            </Form.Select>
+                            <Form.Select value={selectedProject || ''} onChange={(e) => setSelectedProject(e.target.value || null)}>
+                                <option value="">Все проекты</option>
+                                {tasks && tasks.length > 0 && Array.from(new Map(tasks
+                                    .filter(task => task.project_id && task.project_name)
+                                    .map(task => [task.project_id, {id: task.project_id, name: task.project_name}])
+                                    ).values())
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map(project => (
+                                        <option key={project.id} value={project.id}>{project.name}</option>
                                     ))}
-                                </div>
+                            </Form.Select>
+                            <Form.Select value={selectedStatus || ''} onChange={(e) => setSelectedStatus(e.target.value || null)}>
+                                <option value="">Все статусы</option>
+                                {tasks && tasks.length > 0 && Array.from(new Map(tasks
+                                    .filter(task => task.status_id && task.status_name)
+                                    .map(task => [task.status_id, {id: task.status_id, name: task.status_name}])
+                                    ).values())
+                                    .sort((a, b) => a.name.localeCompare(b.name))
+                                    .map(status => (
+                                        <option key={status.id} value={status.id}>{status.name}</option>))}
+                            </Form.Select>
+                        </div>
+                    </div>
+                    <div className={`calendar-grid calendar-${view}`}>
+                        {/*Блок для отображения названий дней недели*/}
+                        {(view === 'week' || view === 'month') && (
+                            <div className="calendar-weekdays">
+                                {weekdays.map((day, index) => (<div key={index} className="weekday">{day}</div>))}
                             </div>
-                        );
-                    })}
-                </div>
+                        )}
+                        {view === 'day' && (
+                            <div className="calendar-weekdays">
+                                <div className="weekday">{getWeekdayName(currentDate)}</div>
+                            </div>
+                        )}
+                        <div className={`calendar-days ${view}`}>
+                            {days.map((date, index) => {
+                                const isToday = formatDateForComparison(date) === formatDateForComparison(today);
+                                const isCurrentMonth = view === 'month' && date.getMonth() === currentDate.getMonth();
+                                const tasksForDate = getTasksForDate(date);
+                                const groupedTasks = groupTasks(tasksForDate);
+                                return (
+                                    <div key={index} className={`calendar-day ${isToday ? 'today' : ''} ${!isCurrentMonth && view === 'month' ? 'other-month' : ''}`}>
+                                        {/*Блок для отображения у каждой ячейки календаря числа и количество задач в списке за это число (дату)*/}
+                                        <div className="day-header" style={{ position: 'relative' }}>
+                                            {view === 'day' && (<HelpTip>
+                                                количество задач на этот день / лимит задач из настроек профиля
+                                            </HelpTip>)}
+                                            <span className="day-number" title="Число">{date.getDate()}</span>
+                                            {tasksForDate.length >= 0 && yourSettings && (
+                                                <span 
+                                                className={`tasks-count ${
+                                                    tasksForDate.length < yourSettings.limit_tasks ? 'normal' :
+                                                    tasksForDate.length === yourSettings.limit_tasks ? 'warning' : 'danger'
+                                                }`}
+                                                title={`${tasksForDate.length} из ${yourSettings.limit_tasks} задач`}
+                                            >
+                                                {tasksForDate.length}/{yourSettings.limit_tasks}
+                                            </span>)}
+                                        </div>
+                                        <div className="tasks-list">
+                                            {Object.entries(groupedTasks).map(([groupName, groupTasks]) => (
+                                                <div key={groupName} className="task-group">
+                                                    {/*Блок для отображения при группировки названия и количества задач в зависимости от выбранного в select значения*/}
+                                                    {groupBy !== 'none' && (
+                                                        <div className="task-group-header">
+                                                            <span className="task-group-name">{groupName}</span>
+                                                            <span className="task-group-count">{groupTasks.length}</span>
+                                                        </div>
+                                                    )}
+                                                    {/*Блок для отображения задачи*/}
+                                                    {getFilteredTasks(groupTasks).map(task => {
+                                                        return (
+                                                            <div key={task.id || Math.random()} className="calendar-task"
+                                                                style={{ 
+                                                                    borderLeft: `5px solid ${task.project_color || '#ccc'}`,
+                                                                    background: task.system_code === 'завершение' ? '#c8f0c9' : '#f8f9fa'
+                                                                }}
+                                                                onClick={() => handleTaskClick(task, date)}
+                                                                title={task.system_code === 'завершение' ? 'Задача завершена' : ''}
+                                                            >
+                                                                <div className="task-indicators">
+                                                                    {task.matrix_color && (
+                                                                        <span className="task-matrix-indicator" 
+                                                                            style={{ backgroundColor: task.matrix_color || 'red' }}
+                                                                            title={task.matrix_name || 'Матрица'}
+                                                                        ></span>
+                                                                    )}
+                                                                    <span className={`task-status-badge`} style={{backgroundColor: task.exec_color}} title = "Статус выполнения">{task.exec_status_name}</span>
+                                                                </div>
+                                                                <span className="task-name-tag" title="Название задачи">{task.task_name}</span>
+                                                                {task.project_name && groupBy !== 'project' && (
+                                                                    <span className="task-project-tag" style={{ color: task.project_color }}
+                                                                    title="Название проекта">{task.project_name}</span>
+                                                                )}
+                                                                {task.status_name && groupBy !== 'status' && (
+                                                                    <span className="task-project-tag" title="Статус задачи">{task.status_name}</span>
+                                                                )}                                                 
+                                                            </div>
+                                                    )})}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    {error && <div className="error-message">{error}</div>}
+                </div>   
             </div>
-            
-            {error && <div className="error-message">{error}</div>}
-        </div>
-    );
-});
+        </div>);});
 
 export default AppCalendar;

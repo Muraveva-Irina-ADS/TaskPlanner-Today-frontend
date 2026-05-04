@@ -15,10 +15,7 @@ const NavBar = observer(() => {
         <Navbar bg="primary" variant="light" style={{ backgroundColor: '#e8f5e9' }}>
             <Container style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', margin: '10px'}}>
-                    <span style={{fontSize: '20px', fontWeight: '800', background: 'linear-gradient(135deg, #4CAF50, #81C784, #2E7D32)',
-                                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', letterSpacing: '1px', fontFamily: "'Inter', sans-serif"}}>
-                        СЕГОДНЯ
-                    </span>
+                    <span className="logo">СЕГОДНЯ</span>
                 </div>
                 <Nav className="nav-buttons" style={{ display: 'flex', gap: '10px' }}>
                     {user.role==='admin' && location.pathname !== "/users" && !user.passwordChange && (

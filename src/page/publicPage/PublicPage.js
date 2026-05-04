@@ -10,6 +10,7 @@ const AppPublicPage = () => {
     const [adminMatrix, setAdminMatrix] = useState({}); 
     const [error, setError] = useState('');
 
+    //Получение информации о настройках матрицы
     const getAdminMatrix = async () => {
         try {
          const adminMatrix = await get_admin_matrix_note();
@@ -20,30 +21,29 @@ const AppPublicPage = () => {
          setError(message);
        }
      };
+     //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций
      useEffect(() => {
         getAdminMatrix();
     }, []);
+
     return (
         <div className="public-page">
+            {/*Заголовок страницы с кнопками Авторизация и Регистрация*/}
             <header className="header">
                 <h1>Задачник с использованием методов тайм-менеджмента</h1>
-                <span style={{fontSize: '28px', fontWeight: '800', background: 'linear-gradient(135deg, #4CAF50, #81C784, #2E7D32)',
-                            WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', letterSpacing: '1px', fontFamily: "'Inter', sans-serif"}}>
-                    СЕГОДНЯ
-                </span>
+                <span className="logo">СЕГОДНЯ</span>
                 <p>Позволяет создавать задачи и управлять временем с помощью методов Pomodoro, матрицы Эйзенхауэра и диаграммы Ганта</p>
                 <div className="auth-links">
                     <Link to="/login" className="auth-link btn-secondary">Авторизация</Link>
                     <Link to="/registration" className="auth-link btn-secondary">Регистрация</Link>
                 </div>
-                <p style={{marginTop: '15px', fontSize: '0.9em', opacity: '0.9'}}>
-                    Бесплатно и без ограничений
-                </p>                
+                <p className="small-font">Бесплатно и без ограничений</p>                
             </header>
+            {/*Блок с информацией о методе Pomodoro с картинкой*/}
             <section className="info-section">
                 <h2>Метод Pomodoro</h2>
                 <p>
-                Метод Pomodoro предполагает чередование периодов сосредоточенной работы и короткого отдыха. Один такой цикл — «помидор» — длится 25 минут. За ним следует пауза на 5 минут.
+                    Метод Pomodoro предполагает чередование периодов сосредоточенной работы и короткого отдыха. Один такой цикл — «помидор» — длится 25 минут. За ним следует пауза на 5 минут.
                 </p>
                 <div className="hero-image-container">
                     <img src={productivityImage} alt="Принцип работы метода Pomodoro" className="hero-image"/>
@@ -63,6 +63,7 @@ const AppPublicPage = () => {
                     </div>
                 </div>
             </section>
+            {/*Блок с информацией о том, как метод Pomodoro можно использовать в приложении*/}
             <section className="how-to-start">
                 <h2>Приложение "Сегодня" - это способ использовать метод Pomodoro для оптимизации своего времени</h2>
                 <div className="steps-list">
@@ -84,10 +85,12 @@ const AppPublicPage = () => {
                     </div>                  
                 </div>
             </section>
+            {/*Блок с информацией о матрице Эйзенхауэра*/}
             <section className="info-section">
                 <h2>Матрица Эйзенхауэра</h2>
                 <p>
-                Матрица Эйзенхауэра — это метод тайм-менеджмента, который помогает управлять временем и расставлять приоритеты. Суть метода в том, чтобы разделить все задачи на четыре группы (квадранта):</p>
+                    Матрица Эйзенхауэра — это метод тайм-менеджмента, который помогает управлять временем и расставлять приоритеты. 
+                    Суть метода в том, чтобы разделить все задачи на четыре группы (квадранта):</p>
 
                 <p>●	важные и срочные,</p>
                 <p>●	важные, но не срочные,</p>
@@ -95,11 +98,8 @@ const AppPublicPage = () => {
                 <p>●	не важные и не срочные.</p>
                 <div className="matrix-grid">
                 {(adminMatrix && Array.isArray(adminMatrix)) ? adminMatrix.map((cell) => (
-                    <div key={cell.matrix_part} className="matrix-cell"
-                        style={{ 
-                            backgroundColor: cell.color,
-                            background: `linear-gradient(135deg, ${cell.color}CC, ${cell.color})`
-                        }}>
+                    <div key={cell.matrix_part} className="matrix-cell" 
+                        style={{backgroundColor: cell.color, background: `linear-gradient(135deg, ${cell.color}CC, ${cell.color})`}}>
                         <div className="cell-number">{cell.matrix_part}</div>
                         <div className="cell-name">{cell.matrix_name}</div>
                         <div className="cell-description">{cell.description}</div>
@@ -107,6 +107,7 @@ const AppPublicPage = () => {
                 )) : (error && <div className="error-message">{error}</div>)}
                 </div>               
             </section>
+            {/*Блок с информацией о том, как матрицу Эйзенхауэра можно использовать в приложении*/}
             <section className="how-to-start">
                 <h2>Приложение "Сегодня" позволяет использовать все возможности матрицы Эйзенхауэра</h2>
                 <div className="steps-list">
@@ -128,10 +129,12 @@ const AppPublicPage = () => {
                     </div>                  
                 </div>
             </section>
+            {/*Блок с информацией о диаграмме Ганта с картинкой-скриншотом из приложения*/}
             <section className="info-section">
                 <h2>Диаграмма Ганта</h2>
                 <p>
-                Диаграмма Ганта — это инструмент для наглядного отображения задач и сроков их выполнения в виде таблицы, где по вертикали отображается список задач, а по горизонтали - даты выполнения.
+                Диаграмма Ганта — это инструмент для наглядного отображения задач и сроков их выполнения в виде таблицы, где по вертикали отображается список задач, 
+                а по горизонтали - даты выполнения.
                  Она позволяет наглядно увидеть запланированные задачи и статусы их выполнения на определённые даты и понять как распределена нагрузка.
                 </p>
                 <div className="hero-image-container">
@@ -139,6 +142,7 @@ const AppPublicPage = () => {
                     <p className="image-caption">Пример диаграммы Ганта</p>
                 </div>
             </section>
+            {/*Блок с информацией о том, как диаграмму Ганта можно использовать в приложении*/}
             <section className="how-to-start">
                 <h2>Приложение "Сегодня" позволяет полноценно использовать диаграмму Ганта</h2>
                 <div className="steps-list">
@@ -156,12 +160,12 @@ const AppPublicPage = () => {
                     </div>                 
                 </div>
             </section>
+            {/*Часть страницы с кнопками Авторизация и Регистрация*/}
             <section className="cta-section">
                 <h3>Присоединяйтесь и планируйте свой день!</h3>
                 <div className="auth-links">
                     <Link to="/login" className="auth-link btn-secondary">Авторизация</Link>
                     <Link to="/registration" className="auth-link btn-secondary">Регистрация</Link>
-                    
                 </div>
             </section>
         </div>

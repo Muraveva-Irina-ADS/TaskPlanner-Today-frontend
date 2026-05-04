@@ -29,6 +29,7 @@ const AppStatistic = observer(() => {
     const [executionStatus, setExecutionStatus] = useState([]);
     const [modalType, setModalType] = useState(null);
     
+    //Определяет дату начала и окончания предоставления дат в зависимости от выбранного параметра (с сегодня, с даты начала, с даты создания)
     const getDateRange = () => {
         if (dateRange.start && dateRange.end) {
             return { start: new Date(dateRange.start), end: new Date(dateRange.end) };
@@ -71,7 +72,8 @@ const AppStatistic = observer(() => {
         }
         
         return { start, end };
-    };    
+    };   
+    //Возвращает массив дат для отображения в таблице 
     const getDaysArray = () => {
         const { start, end } = getDateRange();
         const days = [];
@@ -111,17 +113,19 @@ const AppStatistic = observer(() => {
         }
         return days;
     };
+    //Массив дат
     const days = useMemo(() => {return getDaysArray();}, [tasks, scale, displayFrom, deadlineFilter, dateRange, selectedTaskIds]);
+    //Получение информацию о статусах выполнения
     const getExecutionStatus = async () => {
         try {
-         const executionStatus = await get_executionStatus();
-         setExecutionStatus(executionStatus);
-       } catch (e) {
-         console.error('Ошибка при взаимодействии с сервером:', e);
-         const message = e.response?.data?.error || 'Произошла ошибка';
-         setError(message);
-       }
-     };  
+          const executionStatus = await get_executionStatus();
+          setExecutionStatus(executionStatus);
+        } catch (e) {
+            console.error('Ошибка при взаимодействии с сервером:', e);
+            const message = e.response?.data?.error || 'Произошла ошибка';
+            setError(message);
+    }}; 
+    //Получение информации о задачах
     const getTasks = async () => {
         try {
             const tasksData = await get_tasks_for_gantt();
@@ -142,13 +146,13 @@ const AppStatistic = observer(() => {
         } catch (e) {
             console.error('Ошибка:', e);
             setError(e.response?.data?.error || 'Произошла ошибка');
-        }
-    };
-
+    }};
+    //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций    
     useEffect(() => {
         getTasks();
         getExecutionStatus();
     }, []);
+    //Хук useEffect, который вызывается, при изменении значений location.state
     useEffect(() => {
         if (location.state?.returnTo === 'Gantt' && location.state?.filters) {
             const { filters } = location.state;
@@ -162,6 +166,7 @@ const AppStatistic = observer(() => {
             window.history.replaceState({}, document.title);
         }
     }, [location]);
+    //Группировка задач у проекта
     const groupedTasks = useMemo(() => {
         const groups = {};
         tasks.forEach(task => {
@@ -178,7 +183,7 @@ const AppStatistic = observer(() => {
         Object.values(groups).forEach(project => {project.tasks.sort((a, b) => {return new Date(a.deadline) - new Date(b.deadline);});});
         return Object.values(groups);
     }, [tasks]);
-
+    //Функция для представления даты в формате YYYY-MM-DD
     const formatDateForSQL = (dateValue) => {
         if (!dateValue) return null;
         const date = new Date(dateValue);
@@ -186,9 +191,9 @@ const AppStatistic = observer(() => {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        
         return `${year}-${month}-${day}`;
     };
+    //Проверка перед переходом к странице задачи, проверяет, что есть у задачи выбранный срок выполнения
     const checkDateToTask = (task, date) => {
         const execution = task.executions?.find(e => {
             const execDate = new Date(e.execution_date);
@@ -197,6 +202,7 @@ const AppStatistic = observer(() => {
         if (execution) return true;
         return false;
     };
+    //Вызывает функцию navigate для перехода на страницу задачи
     const handleTaskClick = (task, date) => {
         if (!checkDateToTask(task, date)) return;
         const state = {
@@ -212,10 +218,9 @@ const AppStatistic = observer(() => {
                 expandedTasks: expandedTasks
             }
         };
-        
         navigate(`/project/${task.project_id}/task/${task.task_id}`, { state });
     };
-    
+    //Вызывает функцию navigate для перехода на страницу этапа
     const handleStageClick = (task, stage, date) => {
         if (!checkDateToTask(task, date)) return;
         const state = {
@@ -234,6 +239,7 @@ const AppStatistic = observer(() => {
         
         navigate(`/project/${task.project_id}/task/${task.task_id}/stage/${stage.stage_id}`, { state });
     };
+    //Для фильтрации списка задач в проектах
     const filteredProjects = useMemo(() => {
         return groupedTasks
         .map(project => {
@@ -246,7 +252,7 @@ const AppStatistic = observer(() => {
         })
         .filter(project => project.tasks.length > 0 && (selectedProjectIds.length === 0 || selectedProjectIds.includes(project.id)));
     }, [groupedTasks, selectedTaskIds, selectedProjectIds]);
-
+    //Отвечает за функцию Свернуть или развернуть списки задач и этапов, устанавливая значения состояний
     const toggleEverything = () => {
         if (isEverythingExpanded) {
             setExpandedGroups({});
@@ -264,14 +270,17 @@ const AppStatistic = observer(() => {
             setIsEverythingExpanded(true);
         }
     };
+    //Функция открытия модального окна
     const openModal = (modalType = null) => {
         setShowModal(true);
         setModalType(modalType);
     };
+    //Функция закрытия модального окна
     const closeModal = () => {
         setShowModal(false);
         setModalType(null);
     };
+    //Switch с кодом цвета каждого статуса задачи
     const getStatusColor = (code) => {
         switch(code) {
             case 'завершение':
@@ -286,156 +295,164 @@ const AppStatistic = observer(() => {
                 return '#c6c7c7';
         }
     };
+    //Возвращает код цвета для статуса выполнения задачи или этапа
     const getExecutionColor = (item, date) => {
         const execution = item.executions?.find(e => {
             const execDate = new Date(e.execution_date);
             return execDate.toDateString() === date.toDateString();
         });
         if (execution && execution.exec_color)
-                return execution.exec_color;
+            return execution.exec_color;
         return getStatusColor('');
     };
     return (
         <div className="project-wrapper">
-        <NavBar />
-        {modalType === 'task_selector' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title="Выбор задач для отображения"
-        fields={['task_selector']} users={tasks} extraData={{button: 'Применить', selectedTaskIds: selectedTaskIds, setSelectedTaskIds: setSelectedTaskIds,
-            selectAllTasks: selectAllTasks, setSelectAllTasks: setSelectAllTasks}}/>)}          
-        <div className="project-layout">
-        <Navigate/>
-        <div className="projectHistory-content">
-        <div className="back-button-container">
-            <button onClick={() => navigate(-1)} className="back-button">
-            <img src={backIcon} className="back-icon"/>Назад</button>
-        </div>
-        {error && <div className="error-message">{error}</div>}
-        <div className="profile-header">
-            <h1 className="h1-prof">Диаграмма Ганта</h1>
-        </div>
-            <div className="controls-group">
-                <Button variant="outline-secondary" onClick={toggleEverything}>{isEverythingExpanded ? 'Свернуть всё' : 'Развернуть всё'}</Button>
-                <span className="control-label">Отображать с:</span>
-                    <Form.Select value={displayFrom} onChange={(e) => setDisplayFrom(e.target.value)}>
-                        <option value="today">Сегодня</option>
-                        <option value="start_date">С даты начала</option>
-                        <option value="created_at">С даты создания</option>
-                    </Form.Select>
-                <Button variant="primary" onClick={() => openModal('task_selector')}>Выбрать задачи ({selectedTaskIds.length || '0'})</Button>
-                <span className="control-label">Масштаб:</span>
-                    <Form.Select value={scale} onChange={(e) => setScale(e.target.value)}>
-                        <option value="week">Неделя</option>
-                        <option value="month">Месяц</option>
-                        <option value="custom">Весь период</option>
-                    </Form.Select>
-                <span className="control-label">Дедлайн до:</span>
-                    <Form.Control  type="date"  value={deadlineFilter || ''} onChange={(e) => setDeadlineFilter(e.target.value || null)}/>
-            </div>
-            
-            <div className="gantt-legend">
-                {executionStatus && executionStatus.map(status => (
-                    <div key={status.id} className="legend-item">
-                        <div className="legend-color" style={{ backgroundColor: status.exec_color ? status.exec_color : getStatusColor('')}}/>
-                        <span>{status.exec_status_name}</span>
+            <NavBar />
+            {modalType === 'task_selector' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title="Выбор задач для отображения"
+            fields={['task_selector']} users={tasks} extraData={{button: 'Применить', selectedTaskIds: selectedTaskIds, setSelectedTaskIds: setSelectedTaskIds,
+                selectAllTasks: selectAllTasks, setSelectAllTasks: setSelectAllTasks}}/>)}          
+            <div className="project-layout">
+                <Navigate/>
+                <div className="projectHistory-content">
+                    {/*Кнопка Назад*/}
+                    <div className="back-button-container">
+                        <button onClick={() => navigate(-1)} className="back-button">
+                        <img src={backIcon} className="back-icon"/>Назад</button>
                     </div>
-                ))}
-                <div className="legend-item"> <div className="legend-color" style={{ backgroundColor: getStatusColor(''), border: `1px solid #dee2e6`}}></div> <span>Нет данных</span></div>
-            </div>
-            <div className="gantt-scroll-container">
-            <div className="gantt-table">
-                <div className="gantt-header">
-                        <div className="gantt-col col-task">Задача / Проект</div>
-                        <div className="gantt-col">Статус</div>
-                        <div className="gantt-col">Дата начала</div>
-                        <div className="gantt-col">Дата создания</div>
-                        <div className="gantt-col">Дедлайн</div>
-                        <div className="col-timeline">
-                            {days.map((date, idx) => (
-                                <div key={idx} className="gantt-day-header" title={date.toLocaleDateString('ru-RU')}>{date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' })}</div>
-                            ))}
-                        </div>
-                </div>
-                {filteredProjects.map(project => (
-                    <React.Fragment key={project.id}>
-                        <div className="gantt-project-row">
-                            <div className="gantt-col col-task">
-                                <Button variant="link" className="expand-btn"
-                                    onClick={() => setExpandedGroups(prev => ({...prev, [project.id]: !prev[project.id]}))}>
-                                    {expandedGroups[project.id] ? '▼' : '▶'}
-                                </Button>
-                                <strong style={{ color: project.color || '#333' }}>{project.name}</strong>
-                                <span className="task-count">(задач: {project.tasks.length})</span>
+                    {error && <div className="error-message">{error}</div>}
+                    {/*Заголовок страницы*/}
+                    <div className="profile-header">
+                        <h1 className="h1-prof">Диаграмма Ганта</h1>
+                    </div>
+                    {/*Кнопки-меню для диаграммы Ганта*/}
+                    <div className="controls-group">
+                        <Button variant="outline-secondary" onClick={toggleEverything}>{isEverythingExpanded ? 'Свернуть всё' : 'Развернуть всё'}</Button>
+                        <span className="control-label">Отображать с:</span>
+                            <Form.Select value={displayFrom} onChange={(e) => setDisplayFrom(e.target.value)}>
+                                <option value="today">Сегодня</option>
+                                <option value="start_date">С даты начала</option>
+                                <option value="created_at">С даты создания</option>
+                            </Form.Select>
+                        <Button variant="primary" onClick={() => openModal('task_selector')}>Выбрать задачи ({selectedTaskIds.length || '0'})</Button>
+                        <span className="control-label">Масштаб:</span>
+                            <Form.Select value={scale} onChange={(e) => setScale(e.target.value)}>
+                                <option value="week">Неделя</option>
+                                <option value="month">Месяц</option>
+                                <option value="custom">Весь период</option>
+                            </Form.Select>
+                        <span className="control-label">Дедлайн до:</span>
+                            <Form.Control  type="date"  value={deadlineFilter || ''} onChange={(e) => setDeadlineFilter(e.target.value || null)}/>
+                    </div>
+                    {/*Панель-подсказка с цветом каждого статуса выполнения*/}
+                    <div className="gantt-legend">
+                        {executionStatus && executionStatus.map(status => (
+                            <div key={status.id} className="legend-item">
+                                <div className="legend-color" style={{ backgroundColor: status.exec_color ? status.exec_color : getStatusColor('')}}/>
+                                <span>{status.exec_status_name}</span>
                             </div>
-                            <div className="gantt-col">—</div>
-                            <div className="gantt-col">—</div>
-                            <div className="gantt-col">—</div>
-                            <div className="gantt-col">—</div>
-                            <div className="col-timeline">{days.map((day, idx) => (<div key={idx} className="empty-cell"/>))}</div>
-                        </div>
-                        {expandedGroups[project.id] && project.tasks.map(task => (
-                            <React.Fragment key={task.task_id}>
-                                <div className="gantt-task-row">
-                                    <div className="gantt-col col-task">
-                                        {task.stages.length !== 0 && (
-                                            <Button className="expand-btn" 
-                                                onClick={() => setExpandedTasks(prev => ({...prev, [task.task_id]: !prev[task.task_id]}))}>
-                                                {expandedTasks[task.task_id] ? '▼' : '▶'}
-                                            </Button>)}
-                                        <span style={{ color: project.color || '#333' }}>{task.task_name}</span>
-                                        {task.stages && task.stages.length > 0 && (
-                                            <span className="task-count">(этапов: {task.stages.length})</span>)}
-                                    </div>
-                                    <div className="gantt-col">
-                                        <span className="status-badge" style={{ backgroundColor: getStatusColor(task.system_code) }}>{task.status_name}</span>
-                                    </div>
-                                    <div className="gantt-col">
-                                        {task.min_time_period_dates_tasks ? new Date(task.min_time_period_dates_tasks).toLocaleDateString() : '—'}
-                                    </div>
-                                    <div className="gantt-col">
-                                        {task.created_at ? new Date(task.created_at).toLocaleDateString() : '—'}
-                                    </div>                                    
-                                    <div className="gantt-col">
-                                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : '—'}
-                                    </div>
-                                    <div className="col-timeline">
-                                        {days.map((day, idx) => (
-                                            <div key={idx} className="gantt-cell" style={{ backgroundColor: getExecutionColor(task, day)}}
-                                                onClick={() => handleTaskClick(task, day)} title={`${task.task_name}\n${day.toLocaleDateString()}`}/>
-                                        ))}
-                                    </div>
+                        ))}
+                        <div className="legend-item"> <div className="legend-color" style={{ backgroundColor: getStatusColor(''), border: `1px solid #dee2e6`}}></div> <span>Нет данных</span></div>
+                    </div>
+                    <div className="gantt-scroll-container">
+                    <div className="gantt-table">
+                        {/*Названия колонок таблицы*/}
+                        <div className="gantt-header">
+                                <div className="gantt-col col-task">Задача / Проект</div>
+                                <div className="gantt-col">Статус</div>
+                                <div className="gantt-col">Дата начала</div>
+                                <div className="gantt-col">Дата создания</div>
+                                <div className="gantt-col">Дедлайн</div>
+                                <div className="col-timeline">
+                                    {days.map((date, idx) => (
+                                        <div key={idx} className="gantt-day-header" title={date.toLocaleDateString('ru-RU')}>{date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' })}</div>
+                                    ))}
                                 </div>
-                                {expandedTasks[task.task_id] && task.stages && task.stages.map(stage => (
-                                    <div key={stage.stage_id} className="gantt-stage-row">
-                                        <div className="gantt-col col-task">
-                                            <span>{stage.stage_name}</span>
-                                        </div>
-                                        <div className="gantt-col">
-                                            <span className="status-badge" style={{ backgroundColor: getStatusColor(task.system_code) }}>{task.status_name}</span>
-                                        </div>
-                                        <div className="gantt-col">
-                                            {task.min_time_period_dates_tasks ? new Date(task.min_time_period_dates_tasks).toLocaleDateString() : '—'}
-                                        </div>
-                                        <div className="gantt-col">
-                                            {stage.stage_created_at ? new Date(stage.stage_created_at).toLocaleDateString() : '—'}
-                                        </div>                                        
-                                        <div className="gantt-col">
-                                            {stage.stage_deadline ? new Date(stage.stage_deadline).toLocaleDateString() : '—'}
-                                        </div>
-                                        <div className="col-timeline">
-                                            {days.map((day, idx) => (
-                                                <div key={idx} className="gantt-cell" style={{ backgroundColor: getExecutionColor(stage, day)}}
-                                                    onClick={() => handleStageClick(task, stage, day)} title={`${stage.stage_name}\n${day.toLocaleDateString()}`}/>
-                                            ))}
-                                        </div>
+                        </div>
+                        {filteredProjects.map(project => (
+                            <React.Fragment key={project.id}>
+                                {/*Строка с информацией о проекте*/}
+                                <div className="gantt-project-row">
+                                    <div className="gantt-col col-task">
+                                        <Button variant="link" className="expand-btn"
+                                            onClick={() => setExpandedGroups(prev => ({...prev, [project.id]: !prev[project.id]}))}>
+                                            {expandedGroups[project.id] ? '▼' : '▶'}
+                                        </Button>
+                                        <strong style={{ color: project.color || '#333' }}>{project.name}</strong>
+                                        <span className="task-count">(задач: {project.tasks.length})</span>
                                     </div>
+                                    <div className="gantt-col">—</div>
+                                    <div className="gantt-col">—</div>
+                                    <div className="gantt-col">—</div>
+                                    <div className="gantt-col">—</div>
+                                    <div className="col-timeline">{days.map((day, idx) => (<div key={idx} className="empty-cell"/>))}</div>
+                                </div>
+                                {/*Строка с информацией о задаче*/}
+                                {expandedGroups[project.id] && project.tasks.map(task => (
+                                    <React.Fragment key={task.task_id}>
+                                        <div className="gantt-task-row">
+                                            <div className="gantt-col col-task">
+                                                {task.stages.length !== 0 && (
+                                                    <Button className="expand-btn" 
+                                                        onClick={() => setExpandedTasks(prev => ({...prev, [task.task_id]: !prev[task.task_id]}))}>
+                                                        {expandedTasks[task.task_id] ? '▼' : '▶'}
+                                                    </Button>)}
+                                                <span style={{ color: project.color || '#333' }}>{task.task_name}</span>
+                                                {task.stages && task.stages.length > 0 && (
+                                                    <span className="task-count">(этапов: {task.stages.length})</span>)}
+                                            </div>
+                                            <div className="gantt-col">
+                                                <span className="status-badge" style={{ backgroundColor: getStatusColor(task.system_code) }}>{task.status_name}</span>
+                                            </div>
+                                            <div className="gantt-col">
+                                                {task.min_time_period_dates_tasks ? new Date(task.min_time_period_dates_tasks).toLocaleDateString() : '—'}
+                                            </div>
+                                            <div className="gantt-col">
+                                                {task.created_at ? new Date(task.created_at).toLocaleDateString() : '—'}
+                                            </div>                                    
+                                            <div className="gantt-col">
+                                                {task.deadline ? new Date(task.deadline).toLocaleDateString() : '—'}
+                                            </div>
+                                            <div className="col-timeline">
+                                                {days.map((day, idx) => (
+                                                    <div key={idx} className="gantt-cell" style={{ backgroundColor: getExecutionColor(task, day)}}
+                                                        onClick={() => handleTaskClick(task, day)} title={`${task.task_name}\n${day.toLocaleDateString()}`}/>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        {/*Строка с информацией об этапе*/}
+                                        {expandedTasks[task.task_id] && task.stages && task.stages.map(stage => (
+                                            <div key={stage.stage_id} className="gantt-stage-row">
+                                                <div className="gantt-col col-task">
+                                                    <span>{stage.stage_name}</span>
+                                                </div>
+                                                <div className="gantt-col">
+                                                    <span className="status-badge" style={{ backgroundColor: getStatusColor(task.system_code) }}>{task.status_name}</span>
+                                                </div>
+                                                <div className="gantt-col">
+                                                    {task.min_time_period_dates_tasks ? new Date(task.min_time_period_dates_tasks).toLocaleDateString() : '—'}
+                                                </div>
+                                                <div className="gantt-col">
+                                                    {stage.stage_created_at ? new Date(stage.stage_created_at).toLocaleDateString() : '—'}
+                                                </div>                                        
+                                                <div className="gantt-col">
+                                                    {stage.stage_deadline ? new Date(stage.stage_deadline).toLocaleDateString() : '—'}
+                                                </div>
+                                                <div className="col-timeline">
+                                                    {days.map((day, idx) => (
+                                                        <div key={idx} className="gantt-cell" style={{ backgroundColor: getExecutionColor(stage, day)}}
+                                                            onClick={() => handleStageClick(task, stage, day)} title={`${stage.stage_name}\n${day.toLocaleDateString()}`}/>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </React.Fragment>
                                 ))}
                             </React.Fragment>
                         ))}
-                    </React.Fragment>
-                ))}
-            </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>);});
+    </div>);});
 
 export default AppStatistic;

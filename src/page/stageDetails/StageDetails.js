@@ -22,6 +22,7 @@ const AppStageDetail = () => {
     const [modalType, setModalType] = useState(null); 
     const [formData, setFormData] = useState({});
 
+    //Массив полей этапа с их отображаемыми названиями и ключами для подстановки данных 
     const stageFields = [
         { label: 'Задача:', field: 'task_name' },
         { label: 'Описание:', field: 'description' },
@@ -34,6 +35,7 @@ const AppStageDetail = () => {
     if (stage.system_code === 'завершение') {
         stageFields.push({label: 'Окончательный дедлайн (дата завершения задачи):', field: 'final_deadline' });
     }
+    //Получение информации об этапе
     const getStage = async () => {
         try {
             const stages = await get_info_stage_by_id(stageId, formatDateForSQL(location.state?.returnDate));
@@ -42,8 +44,8 @@ const AppStageDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }; 
+    }}; 
+    //Получение информации о дате выполнения этапа
     const getDatesStages = async () => {
         try {
             const dates = await get_info_dates_stages(stageId);
@@ -52,31 +54,28 @@ const AppStageDetail = () => {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Хук useEffect, в котором вызываются функции для получения данных из базы данных с помощью API-функций
     useEffect(() => {
         getStage();
         getDatesStages();
     }, []);
+    //Хук useEffect, который вызывается, при изменении значений location.state
     useEffect(() => {
         if (location.state?.returnDate) {
             getStage();
         }
     }, [location.state]);
+    //Функция вызывается при нажатии кнопки "Назад" и возвращает переданные на страницу значения location.state
     const handleGoBack = () => {
         if (location.state?.returnTo === 'Gantt') {
-            navigate('/statistic', { 
-                state: location.state
-            });
+            navigate('/statistic', {state: location.state});
         } else if (location.state?.returnTo === 'Project') {
-            navigate(`/project`, { 
-                state: location.state
-            });
+            navigate(`/project`, {state: location.state});
         } else
-        navigate(`/project/${id}/task/${taskId}`, { 
-            state: location.state
-        });
+        navigate(`/project/${id}/task/${taskId}`, {state: location.state});
     };
+    //Функция для подсчета количества часов от начала до окончания времени
     const calculateDuration = (start, end) => {
         if (!start || !end) return null;
         if (start === '00:00:00' && end === '00:00:00') {
@@ -87,35 +86,31 @@ const AppStageDetail = () => {
         }
         const [startHours, startMinutes] = start.split(':').map(Number);
         const [endHours, endMinutes] = end.split(':').map(Number);
-        
         let totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
         if (totalMinutes < 0) {
             totalMinutes += 24 * 60;
         }
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-        
         if (hours === 0) return `${minutes} мин`;
         if (minutes === 0) return `${hours} ч`;
         return `${hours} ч ${minutes} мин`;
     };
+    //Функция для изменения состояния полей формы в модальном окне
     const handleChange = (e, index = null) => {
         const { name, value, type } = e.target;
         if (index !== null && Array.isArray(formData)) {
             const updatedArray = [...formData];
-            updatedArray[index] = {
-                ...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value
-            };
+            updatedArray[index] = {...updatedArray[index], [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value};
             setFormData(updatedArray);
-        }
-        else {
+        } else {
             if (type === 'number') {
                 setFormData(prev => ({...prev, [name]: value === '' ? '' : Number(value)}));
             } else {
                 setFormData(prev => ({...prev, [name]: value}));
             }
-        }
-    };
+    }};
+    //Функция открытия модального окна
     const openModal = (userData = null, modalType = null) => {
         if (userData)
             setFormData({...userData});   
@@ -124,12 +119,14 @@ const AppStageDetail = () => {
         setShowModal(true);
         setModalType(modalType);
     };
+    //Функция закрытия модального окна
     const closeModal = () => {
         setShowModal(false);
         setModalType(null);
         setFormData({});
         setError('');
     };
+    //Валидация полей этапа и вызов API-функции для изменения данных в таблице stages (этапы)
     const handleSave = async() => {
         try {
             let value = modalType;
@@ -150,18 +147,18 @@ const AppStageDetail = () => {
                 data = await stage_put(stageId, formatDateForSQL(formData[value]), value);
             else 
                  data = await stage_put(stageId, formData[value], value);
-                if (data) {
-                    toast.success('Сохранено');
-                    closeModal();
-                    getStage();
-                    getDatesStages();
-                }
+            if (data) {
+                toast.success('Сохранено');
+                closeModal();
+                getStage();
+                getDatesStages();
+            }
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }
+    }};
+    //Функция для представления даты в формате YYYY-MM-DD
     const formatDateForSQL = (dateValue) => {
         if (!dateValue) return null;
         const date = new Date(dateValue);
@@ -171,6 +168,7 @@ const AppStageDetail = () => {
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     };
+    //Функция для представления времени без секунд
     const formatTimeForSQL = (timeValue) => {
         if (!timeValue) return '00:00:00';
         if (typeof timeValue === 'string' && timeValue.includes(':')) {
@@ -180,6 +178,7 @@ const AppStageDetail = () => {
         }
         return '00:00:00';
     };
+    //Валидация полей начала и окончания запланированного времени и вызов API-функции для изменения данных в таблице dates_stages (сроки выполнения этапа)
     const handleSaveDates = async() => {
         try {
             if (!formData.planned_start_time || !formData.planned_end_time){
@@ -187,26 +186,26 @@ const AppStageDetail = () => {
                 return;
             }
             const formattedData = {
-                    ...formData,
-                    execution_date: formatDateForSQL(formData.execution_date),
-                    planned_start_time: formatTimeForSQL(formData.planned_start_time),
-                    planned_end_time: formatTimeForSQL(formData.planned_end_time),
-                    actual_start_time: formatTimeForSQL(formData.actual_start_time),
-                    actual_end_time: formatTimeForSQL(formData.actual_end_time)
+                ...formData,
+                execution_date: formatDateForSQL(formData.execution_date),
+                planned_start_time: formatTimeForSQL(formData.planned_start_time),
+                planned_end_time: formatTimeForSQL(formData.planned_end_time),
+                actual_start_time: formatTimeForSQL(formData.actual_start_time),
+                actual_end_time: formatTimeForSQL(formData.actual_end_time)
             };
             const data = await dates_stages_put_for_stage(formattedData);
-                if (data) {
-                    toast.success('Сохранено');
-                    closeModal();
-                    getStage();
-                    getDatesStages();
-                }
+            if (data) {
+                toast.success('Сохранено');
+                closeModal();
+                getStage();
+                getDatesStages();
+            }
         } catch (e) {
             console.error('Ошибка при взаимодействии с сервером:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    }   
+    }};   
+    //Функция для получения текста кнопки в зависимости от статуса выполнения этапа 
     const getButtonText = () => {
         if (stage.system_code === "завершение") {
             return 'Задача завершена, взять в работу этап невозможно';
@@ -219,6 +218,7 @@ const AppStageDetail = () => {
         }
         return `Приступить к этапу за ${new Date(stage.execution_date).toLocaleDateString('ru-RU')}?`;
     };
+    //Функция для изменения статуса выполнения этапа
     const handleStageStateChange = async () => {
         try {
             const now = new Date();
@@ -242,7 +242,7 @@ const AppStageDetail = () => {
                         updates.code = "выполнение"
                         updates.actual_end_time = currentTime;
                 } else 
-                    return
+                    return;
             }
             else if (stage.stage_code === "выполнение") {
                 if (!window.confirm('Отменить выполнение и вернуть этап в работу?')) return;
@@ -265,8 +265,8 @@ const AppStageDetail = () => {
             console.error('Ошибка при обновлении статуса задачи:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Функция для изменения статуса выполнения этапа на статус "Отмена" или "Ожидание"
     const handleClickCansel = async (stage) => {
         try {
             let updates = {
@@ -293,8 +293,8 @@ const AppStageDetail = () => {
             console.error('Ошибка при обновлении статуса задачи:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Вызывается при нажатии на кнопку для изменения статуса выполнения этапа
     const handleClick = () => {
         if (stage.system_code === 'остановка') {
             if (window.confirm('Задача приостановлена. Сначала поменяйте статус задачи и установите "В работе". Если хотите поменять, нажмите ОК, иначе Отмена')) {
@@ -302,14 +302,13 @@ const AppStageDetail = () => {
             } 
         } else if (stage.task_code !== 'работа' && stage.task_code !== 'выполнение') {
                 if (window.confirm(`Задача не начата за ${new Date(stage.execution_date).toLocaleDateString('ru-RU')}. Сначала приступите к задаче. Для перехода нажмите к задаче нажмите ОК, иначе Отмена`))
-                    navigate(`/project/${id}/task/${taskId}`, { 
-                        state: location.state
-                    })
+                    navigate(`/project/${id}/task/${taskId}`, {state: location.state})
                 return;
         } else {
             handleStageStateChange();
         }
     };
+    //Функция для изменения статуса задачи
     const handlePutStatus = async () => {
         try {
             const data = await status_put_for_task(taskId, 'работа');
@@ -323,15 +322,23 @@ const AppStageDetail = () => {
             console.error('Ошибка при обновлении статуса задачи:', e);
             const message = e.response?.data?.error || 'Произошла ошибка';
             setError(message);
-        }
-    };
+    }};
+    //Выполняет навигацию на страницу Pomodoro
     const handleClickPomodoro = () => {
         navigate(`/pomodoro`, {replace: true, state: {selectedTask: taskId, selectedStage: stageId}})
     };
-    const go_to_task = (selectedDate) => {
+    //Функция для отображения выбранного в таблице срока выполнения этапа
+    const go_to_stage = (selectedDate) => {
         closeModal();
         navigate(`/project/${id}/task/${taskId}/stage/${stageId}`, {replace: true, state: {returnTo: 'TaskDetails', returnDate: formatDateForSQL(selectedDate)}})
     };
+    // Обработчик клика по полю этапа: проверяет возможность редактирования и открывает модальное окно или показывает предупреждение
+    const handleFieldClick = (item) => {
+        if (item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' || item.field === 'task_name') {
+            return;
+        }
+        openModal(stage, item.field);
+    }
     return (
         <div className="project-wrapper">
             <NavBar />
@@ -352,78 +359,78 @@ const AppStageDetail = () => {
                         fields={['pomodoros_planned']}/>)}    
             {modalType === 'info_dates_stages' && (<ModalStr show={showModal} onHide={closeModal} modalType={modalType} title={'Информация о датах выполнения этапа'}
                         fields={['info_dates_tasks']} users = {dates_stages} extraData={{button: 'OK', titleColums: ['Дата выполнения', 'Запланированное время', 'Фактическое время', 'Статус', 'Действие'],
-                                                                        valueColums: ['execution_date', 'plan', 'fact', 'status', 'action'], go_to_task: go_to_task, selectDate: stage.execution_date, clickCancel: handleClickCansel}}/>)}                                                                         
+                        valueColums: ['execution_date', 'plan', 'fact', 'status', 'action'], go_to_task: go_to_stage, selectDate: stage.execution_date, clickCancel: handleClickCansel}}/>)}                                                                         
             <div className="project-layout">
-            <Navigate/>
-            <div className="projectHistory-content">
-            <div className="back-button-container">
-                <button onClick={handleGoBack} className="back-button">
-                <img src={backIcon} className="back-icon"/>Назад</button>
-            </div>
-            <div className="profile-header">
-                <div className="clickable-title" onClick={() => openModal(stage, 'stage_name')}>
-                    <h1 className="h1-prof">Этап: {stage.stage_name}</h1>
-                    <div className="edit-hint">
-                        <span className="edit-icon">✎</span>
-                        <span>кликните для редактирования</span>
+                <Navigate/>
+                <div className="projectHistory-content">
+                    {/*Кнопка Назад*/}
+                    <div className="back-button-container">
+                        <button onClick={handleGoBack} className="back-button">
+                        <img src={backIcon} className="back-icon"/>Назад</button>
                     </div>
-                </div>
-            </div>
-            {stage.system_code !== 'ожидание' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClick}>{getButtonText()}</Button>)}
-            {stage.system_code === 'ожидание' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handlePutStatus}>Взять задачу в работу?</Button>)}
-            {stage.system_code === 'работа' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClickPomodoro}>Начать помидор</Button>)}
-            {error && <div className="error-message">{error}</div>}
-            {stageFields.map((item, index) => (<>
-                {item.field === 'execution_date' ? (
-                    <div className="section-select">
-                        <div className="display-tasks" >
-                            <h2 className="h1-prof">{item.label}</h2>
-                            <div className="message-block-time">
-                                <div className="mt-3 mb-3 p-4 modal-input">
-                                    <span className="message-text">{new Date(stage.execution_date).toLocaleDateString('ru-RU')}</span>
-                                </div>  
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(stage, 'plan_time');}}>
-                                    <div className="display-tasks">
-                                        <span className="message-text">Запланированное время:</span>
-                                        <span className="message-text">{stage.planned_start_time?.substring(0, 5)} - {stage.planned_end_time?.substring(0, 5)}</span>
-                                        <span className="message-text">({calculateDuration(stage.planned_start_time, stage.planned_end_time)})</span>
-                                    </div>
-                                </div>
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" >    
-                                    <div className="display-tasks">
-                                        <span className="message-text">Фактическое время:</span>
-                                        <span className="message-text">{stage.actual_start_time?.substring(0, 5)} - {stage.actual_end_time?.substring(0, 5)}</span>
-                                        <span className="message-text">({calculateDuration(stage.actual_start_time, stage.actual_end_time)})</span>
-                                    </div>
-                                </div> 
-                                <div className="mt-3 mb-3 p-4 modal-input message-block" >    
-                                    <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_stages')}>Посмотреть информацию о всех датах выполнения задачи</Button>
-                                </div>                                                       
+                    {/*Заголовок страницы*/}
+                    <div className="profile-header">
+                        <div className="clickable-title" onClick={() => openModal(stage, 'stage_name')}>
+                            <h1 className="h1-prof">Этап: {stage.stage_name}</h1>
+                            <div className="edit-hint">
+                                <span className="edit-icon">✎</span>
+                                <span>кликните для редактирования</span>
                             </div>
                         </div>
                     </div>
-                ) : (
-                <div key={index} className="section-select">
-                    <div className="display-tasks">
-                        <h2 className="h1-prof">{item.label}</h2>
-                        <div className={`mt-3 mb-3 p-4 modal-input ${item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' || item.field === 'task_name' ? '' : 'message-block'}`} onClick={() => {
-                                    if (item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' || item.field === 'task_name') {
-                                        return;
-                                    }
-                                    openModal(stage, item.field);
-                                    }}>
-                            <p className="message-text">{item.field === 'pomodoros_planned' && stage[item.field] === -1 
-                                ? 'Введите количество' : (item.field.includes('date') || item.field.includes('_at') || item.field.includes('deadline') 
-                                ? new Date(stage[item.field]).toLocaleDateString('ru-RU') : stage[item.field])}
-                            </p>
-                        </div>
-                    </div>
+                    {/*Кнопки для изменения статуса выполнения и перехода на страницу Pomodoro*/}
+                    {stage.system_code !== 'ожидание' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClick}>{getButtonText()}</Button>)}
+                    {stage.system_code === 'ожидание' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handlePutStatus}>Взять задачу в работу?</Button>)}
+                    {stage.system_code === 'работа' && stage.stage_code !== 'отмена' && (<Button variant='primary' style={{height: '60px'}} onClick={handleClickPomodoro}>Начать помидор</Button>)}
+                    {error && <div className="error-message">{error}</div>}
+                    {stageFields.map((item, index) => (<>
+                    {/*Отображение поля дата и время выполнения*/}
+                        {item.field === 'execution_date' ? (
+                            <div className="section-select">
+                                <div className="display-tasks" >
+                                    <h2 className="h1-prof">{item.label}</h2>
+                                    <div className="message-block-time">
+                                        <div className="mt-3 mb-3 p-4 modal-input">
+                                            <span className="message-text">{new Date(stage.execution_date).toLocaleDateString('ru-RU')}</span>
+                                        </div>  
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" onClick={() => {openModal(stage, 'plan_time');}}>
+                                            <div className="display-tasks">
+                                                <span className="message-text">Запланированное время:</span>
+                                                <span className="message-text">{stage.planned_start_time?.substring(0, 5)} - {stage.planned_end_time?.substring(0, 5)}</span>
+                                                <span className="message-text">({calculateDuration(stage.planned_start_time, stage.planned_end_time)})</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" >    
+                                            <div className="display-tasks">
+                                                <span className="message-text">Фактическое время:</span>
+                                                <span className="message-text">{stage.actual_start_time?.substring(0, 5)} - {stage.actual_end_time?.substring(0, 5)}</span>
+                                                <span className="message-text">({calculateDuration(stage.actual_start_time, stage.actual_end_time)})</span>
+                                            </div>
+                                        </div> 
+                                        <div className="mt-3 mb-3 p-4 modal-input message-block" >    
+                                            <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_stages')}>Посмотреть информацию о всех датах выполнения задачи</Button>
+                                        </div>                                                       
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            //Отображение остальных полей
+                            <div key={index} className="section-select">
+                                <div className="display-tasks">
+                                    <h2 className="h1-prof">{item.label}</h2>
+                                    <div className={`mt-3 mb-3 p-4 modal-input ${item.field === 'created_at' || item.field === 'final_deadline' || item.field === 'pomodoros_spent' || item.field === 'task_name' ? '' : 'message-block'}`} 
+                                        onClick={() => {handleFieldClick(item)}}>
+                                        <p className="message-text">{item.field === 'pomodoros_planned' && stage[item.field] === -1 
+                                            ? 'Введите количество' : (item.field.includes('date') || item.field.includes('_at') || item.field.includes('deadline') 
+                                            ? new Date(stage[item.field]).toLocaleDateString('ru-RU') : stage[item.field])}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                    )}</>))}
                 </div>
-            )}</>))}
+            </div>
         </div>
-        </div>
-        </div>
-    );
-};
+    );};
 
 export default AppStageDetail;
