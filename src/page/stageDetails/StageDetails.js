@@ -408,7 +408,7 @@ const AppStageDetail = () => {
                                             </div>
                                         </div> 
                                         <div className="mt-3 mb-3 p-4 modal-input message-block" >    
-                                            <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_stages')}>Посмотреть информацию о всех датах выполнения задачи</Button>
+                                            <Button variant='primary' style={{width: '100%'}} onClick={() => openModal(null, 'info_dates_stages')}>Посмотреть информацию о всех датах выполнения этапа</Button>
                                         </div>                                                       
                                     </div>
                                 </div>
